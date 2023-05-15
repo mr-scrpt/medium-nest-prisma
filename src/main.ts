@@ -1,13 +1,13 @@
-if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-  console.log('Development mode ====>>>>');
-  require('module-alias/register');
-}
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app/app.module';
+
+import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+if (process.env.NODE_ENV || process.env.NODE_ENV === 'prod') {
+  require('module-alias/register');
+}
 async function bootstrap() {
-  const APP_PORT = process.env.APP_PORT || 3000;
+  const APP_PORT = process.env.APP_PORT;
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
@@ -18,7 +18,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(APP_PORT);
-  console.log(`Application is running on: ${APP_PORT}`);
+  await app.listen(APP_PORT, () =>
+    console.log(`===>>>> Server is running on port ${APP_PORT}`),
+  );
 }
+
 bootstrap();

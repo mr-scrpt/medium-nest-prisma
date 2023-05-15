@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TagService } from '@app/tag/tag.service';
+import { PrismaModule } from '@app/prisma/prisma.module';
 import { TagModule } from '@app/tag/tag.module';
 
 @Module({
-  imports: [TagModule],
-  providers: [TagService],
+  imports: [PrismaModule, TagModule],
 })
 export class AppModule {}

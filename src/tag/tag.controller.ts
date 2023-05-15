@@ -1,16 +1,19 @@
 import { Controller, Get } from '@nestjs/common';
 import { TagService } from '@app/tag/tag.service';
 import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
-import { TagEntity } from '@app/tag/entity/tag.entity';
+import { TagResponseEntity } from './entity/tagResponse.entity';
 
 @Controller('tags')
-@ApiTags('article')
+@ApiTags('tags')
 export class TagController {
   constructor(private readonly tagService: TagService) {}
 
-  @ApiCreatedResponse({ type: TagEntity, isArray: true })
+  @ApiCreatedResponse({ type: TagResponseEntity, isArray: true })
   @Get()
-  findAll(): Array<TagEntity> {
-    return this.tagService.findAll();
+  async findAll(): Promise<TagResponseEntity> {
+    const tags = await this.tagService.findAll();
+    return {
+      tags: tags.map((tag) => tag.name),
+    };
   }
 }
