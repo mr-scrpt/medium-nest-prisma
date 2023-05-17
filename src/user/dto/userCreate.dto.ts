@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ValidateNested } from 'class-validator';
 
-export class UserDto {
+export class UserCreateDto {
   @ApiProperty({ example: 'username', description: 'The username of the User' })
   readonly username: string;
 
@@ -16,10 +15,4 @@ export class UserDto {
     description: 'The password of the User',
   })
   readonly password: string;
-}
-
-export class UserCreateDto {
-  @ApiProperty({ type: UserDto })
-  @ValidateNested()
-  user: UserDto;
 }
