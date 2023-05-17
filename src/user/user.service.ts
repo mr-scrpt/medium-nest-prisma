@@ -25,4 +25,15 @@ export class UserService {
       },
     });
   }
+
+  // async buildUserResponse(userDto: UserDto) {
+  //   const { id } = userDto;
+  //   const token = this.authService.generateJWT(id);
+  //   return {
+  //     user: {
+  //       ...userDto,
+  //       token,
+  //     },
+  //   };
+  // }
 }

@@ -3,21 +3,18 @@ import { PrismaClient, Tag, User } from '@prisma/client';
 // initialize Prisma Client
 const prisma = new PrismaClient();
 
-const tag: Array<Tag> = [
+const tag: Array<Omit<Tag, 'id'>> = [
   {
-    id: 1,
     name: 'dragon',
   },
   {
-    id: 2,
     name: 'nest',
   },
 ];
 
 // password: password
-const userList: Array<User> = [
+const userList: Array<Omit<User, 'id'>> = [
   {
-    id: 1,
     username: 'Admin',
     email: 'test.admim@gmail.com',
     password:
@@ -26,7 +23,6 @@ const userList: Array<User> = [
     image: 'https://static.productionready.io/images/smiley-cyrus.jpg',
   },
   {
-    id: 2,
     username: 'TestUser',
     email: 'test@gmail.com',
     password:

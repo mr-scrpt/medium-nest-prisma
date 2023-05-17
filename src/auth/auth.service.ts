@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
+import { sign } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -76,5 +77,9 @@ export class AuthService {
       };
       scrypt(password, salt, hash.length, params, callback);
     });
+  };
+
+  generateJWT = (id: string): string => {
+    return sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' });
   };
 }
