@@ -9,7 +9,7 @@ export class UserService {
     private prisma: PrismaService,
     private authService: AuthService,
   ) {}
-  async createUsers(userDto: UserDto): Promise<any> {
+  async createUsers(userDto: UserDto): Promise<UserDto> {
     const { email, password } = userDto;
     const userExists = await this.prisma.user.findUnique({ where: { email } });
 

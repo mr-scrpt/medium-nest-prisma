@@ -9,8 +9,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
   @Post('users')
   @ApiBody({ type: UserCreateDto })
-  async createUsers(@Body('user') userDto: UserDto): Promise<any> {
-    await this.userService.createUsers(userDto);
-    return '';
+  async createUsers(@Body('user') userDto: UserDto): Promise<UserDto> {
+    return await this.userService.createUsers(userDto);
   }
 }

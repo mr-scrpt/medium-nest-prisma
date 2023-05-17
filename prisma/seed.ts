@@ -1,4 +1,4 @@
-import { PrismaClient, Tag } from '@prisma/client';
+import { PrismaClient, Tag, User } from '@prisma/client';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
@@ -14,14 +14,27 @@ const tag: Array<Tag> = [
   },
 ];
 
-// const userList = [
-//   {
-//     id: '1',
-//     name: 'Super',
-//     email: 'test@gmail.com',
-//     password: '123456',
-//   },
-// ];
+// password: password
+const userList: Array<User> = [
+  {
+    id: 1,
+    username: 'Admin',
+    email: 'test.admim@gmail.com',
+    password:
+      '$scrypt$N=32768,r=8,p=1,maxmem=67108864$qBE6nS2qFssoYSs3LDPHRkOH1iCWYJP8cGb+LFbnyVc$jKNNdSJOeKTNsZzuxuW9AIsCZjCAdaxtcVpSr0kXlNskT7XFj6itkrWOH6kIA68dMRvRgI/p7kW2mwbGaC+Y/Q',
+    bio: 'lore ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua',
+    image: 'https://static.productionready.io/images/smiley-cyrus.jpg',
+  },
+  {
+    id: 2,
+    username: 'TestUser',
+    email: 'test@gmail.com',
+    password:
+      '$scrypt$N=32768,r=8,p=1,maxmem=67108864$qBE6nS2qFssoYSs3LDPHRkOH1iCWYJP8cGb+LFbnyVc$jKNNdSJOeKTNsZzuxuW9AIsCZjCAdaxtcVpSr0kXlNskT7XFj6itkrWOH6kIA68dMRvRgI/p7kW2mwbGaC+Y/Q',
+    bio: 'elit sed do e lore ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore',
+    image: 'https://static.productionready.io/images/smiley-cyrus.jpg',
+  },
+];
 
 type Entity = {
   [key: string]: any;
@@ -47,6 +60,7 @@ async function execute<T extends Entity, K extends keyof T>(
 
 async function main() {
   await execute(tag, 'tag', 'name');
+  await execute(userList, 'user', 'email');
   // await execute(userList, 'user', 'id');
 }
 // execute the main function
