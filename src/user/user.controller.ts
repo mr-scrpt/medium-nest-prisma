@@ -5,6 +5,7 @@ import { ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
 import { UserService } from '@app/user/user.service';
 import { UserCreateDto } from './dto/userCreate.dto';
 import { UserBuildResponseDto } from './dto/userBuildResponse.dto';
+import { UsePipes, ValidationPipe } from '@nestjs/common';
 
 @Controller()
 export class UserController {
@@ -12,6 +13,7 @@ export class UserController {
   @Post('users')
   @ApiBody({ type: UserRequestCreateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @UsePipes(new ValidationPipe())
   async createUsers(
     @Body('user') userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {

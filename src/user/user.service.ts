@@ -12,9 +12,10 @@ export class UserService {
     private authService: AuthService,
   ) {}
   async createUsers(userCreateDto: UserCreateDto): Promise<UserEntity> {
-    const { email, password } = userCreateDto;
-    const userExists = await this.prisma.user.findUnique({ where: { email } });
+    const { username, email, password } = userCreateDto;
+    // const userExists = await this.prisma.user.findUnique({ where: { email } });
 
+    const userExists = await this.checkUserExists(email, username);
     if (userExists) {
       throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
     }
@@ -26,6 +27,16 @@ export class UserService {
         password: passwordHashed,
       },
     });
+  }
+
+  async checkUserExists(email: string, username: string): Promise<boolean> {
+    const userExists = await this.prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { username }],
+      },
+    });
+
+    return !!userExists;
   }
 
   buildUserResponse(userDto: UserEntity): UserBuildResponseDto {
