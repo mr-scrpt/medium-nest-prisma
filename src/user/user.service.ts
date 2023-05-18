@@ -4,6 +4,7 @@ import { AuthService } from '@app/auth/auth.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserEntity } from './entity/user.entity';
 import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
+import { UserLoginDto } from './dto/userLogin.dto';
 
 @Injectable({})
 export class UserService {
@@ -31,6 +32,32 @@ export class UserService {
     });
   }
 
+  async login(userLoginDto: UserLoginDto): Promise<UserEntity> {
+    const { email, password } = userLoginDto;
+
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      throw new HttpException(
+        'Email or password are invalid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    const passwordValid = await this.authService.validatePassword(
+      password,
+      user.password,
+    );
+
+    if (!passwordValid) {
+      throw new HttpException(
+        'Email or password are invalid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    return user;
+  }
+
   async checkUserExists(email: string, username: string): Promise<boolean> {
     const userExists = await this.prisma.user.findFirst({
       where: {
@@ -39,6 +66,14 @@ export class UserService {
     });
 
     return !!userExists;
+  }
+
+  async getUserByEmail(email: string): Promise<UserEntity> {
+    return await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
   }
 
   buildUserResponse(userDto: UserEntity): UserBuildResponseDto {
