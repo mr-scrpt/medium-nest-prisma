@@ -13,11 +13,13 @@ export class UserService {
   ) {}
   async createUsers(userCreateDto: UserCreateDto): Promise<UserEntity> {
     const { username, email, password } = userCreateDto;
-    // const userExists = await this.prisma.user.findUnique({ where: { email } });
 
     const userExists = await this.checkUserExists(email, username);
     if (userExists) {
-      throw new HttpException('User already exists', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Email or username are taken',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
     const passwordHashed = await this.authService.hashPassword(password);
 
