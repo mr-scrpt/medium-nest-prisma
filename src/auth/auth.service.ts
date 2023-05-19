@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { sign } from 'jsonwebtoken';
+import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
@@ -81,5 +81,14 @@ export class AuthService {
 
   generateJWT = (id: string): string => {
     return sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  };
+
+  decodeJWT = (token: string): JwtPayload | string => {
+    try {
+      return verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
+      return null;
+    }
   };
 }
