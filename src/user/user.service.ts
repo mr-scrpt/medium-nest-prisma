@@ -7,6 +7,7 @@ import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { JwtPayload } from 'jsonwebtoken';
 import { TokenDecode } from '@app/user/type/tokenDecode.interface';
+import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 
 @Injectable({})
 export class UserService {
@@ -32,6 +33,71 @@ export class UserService {
         password: passwordHashed,
       },
     });
+  }
+
+  async updateUser(
+    id: number,
+    updateUserDto: UserUpdateDto,
+  ): Promise<UserEntity> {
+    const { password, passwordOld, email, username } = updateUserDto;
+
+    const userExists = await this.checkUserExists(email, username);
+    if (userExists) {
+      throw new HttpException(
+        'Email or username are taken',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    const dataUpdate = { ...updateUserDto };
+    for (const key in dataUpdate) {
+      if (!dataUpdate[key]) {
+        delete dataUpdate[key];
+      }
+    }
+    if (password && !passwordOld) {
+      throw new HttpException(
+        'Password old is required',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    if (password && passwordOld) {
+      console.log('in password update');
+      const user = await this.getUserById(id);
+      if (!user) {
+        throw new HttpException(
+          'User not found',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      const passwordValid = await this.authService.validatePassword(
+        passwordOld,
+        user.password,
+      );
+
+      if (!passwordValid) {
+        throw new HttpException(
+          'Password is invalid',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+      console.log('after check password');
+      const passwordHashed = await this.authService.hashPassword(password);
+      console.log(passwordHashed);
+      dataUpdate.password = passwordHashed;
+      delete dataUpdate.passwordOld;
+    }
+
+    return await this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        ...dataUpdate,
+      },
+    });
+    // return '' as any;
   }
 
   async login(userLoginDto: UserLoginDto): Promise<UserEntity> {

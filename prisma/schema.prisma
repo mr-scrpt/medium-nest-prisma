@@ -17,7 +17,7 @@ model Tag {
 
 model User {
   id       Int     @id @default(autoincrement())
-  username String
+  username String  @unique
   email    String  @unique @default("")
   password String
   bio      String?
