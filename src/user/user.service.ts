@@ -41,6 +41,13 @@ export class UserService {
   ): Promise<UserEntity> {
     const { password, passwordOld, email, username } = updateUserDto;
 
+    if ((password && !passwordOld) || (!password && passwordOld)) {
+      throw new HttpException(
+        'Password and passwordOld are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const userExists = await this.checkUserExists(email, username);
     if (userExists) {
       throw new HttpException(
@@ -50,20 +57,14 @@ export class UserService {
     }
 
     const dataUpdate = { ...updateUserDto };
+
     for (const key in dataUpdate) {
       if (!dataUpdate[key]) {
         delete dataUpdate[key];
       }
     }
-    if (password && !passwordOld) {
-      throw new HttpException(
-        'Password old is required',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
 
     if (password && passwordOld) {
-      console.log('in password update');
       const user = await this.getUserById(id);
       if (!user) {
         throw new HttpException(
@@ -82,9 +83,7 @@ export class UserService {
           HttpStatus.UNPROCESSABLE_ENTITY,
         );
       }
-      console.log('after check password');
       const passwordHashed = await this.authService.hashPassword(password);
-      console.log(passwordHashed);
       dataUpdate.password = passwordHashed;
       delete dataUpdate.passwordOld;
     }

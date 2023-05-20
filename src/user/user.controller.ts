@@ -63,7 +63,7 @@ export class UserController {
   @ApiBody({ type: UserRequestUpdateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
   @UsePipes(new ValidationPipe())
-  async updateUser(
+  async updateCurrentUser(
     @Headers('Authorization') auth: string | undefined,
     @Body('user') userUpdateDto: UserUpdateDto,
   ): Promise<UserBuildResponseDto> {
