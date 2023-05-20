@@ -8,7 +8,7 @@ import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
 import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { UserRequestLoginDto } from '@app/user/dto/userRequestLogin.dto';
-import { AuthGuard } from '@app/user/guard/auth.guard';
+import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/userRequestUpdate.dto';
 

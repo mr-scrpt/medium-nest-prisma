@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "dotenv -e .env.prod -- node dist/src/main",
     "migrate:dev": "npx dotenv -e .env.dev -- npx prisma migrate deploy",
-    "migrate:do": "npx dotenv -e .env.dev -- npx prisma migrate dev --name",
+    "migrate:create": "npx dotenv -e .env.dev -- npx prisma migrate dev --name",
     "migrate:prod": "npx dotenv -e .env.prod -- npx prisma migrate deploy",
     "seed:dev": "npx dotenv -e .env.dev -- npx prisma db seed",
     "studio:dev": "npx dotenv -e .env.de -- npx prisma studio",
