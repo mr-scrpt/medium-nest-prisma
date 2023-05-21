@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
-import { UserClearDto } from '@app/user/dto/userClear.dto';
+import { UserWithTokenDto } from './userWithToken.dto';
 
 export class UserBuildResponseDto {
-  @ApiProperty({ type: UserClearDto })
+  @ApiProperty({ type: UserWithTokenDto })
   @ValidateNested()
-  user: UserClearDto;
+  user: UserWithTokenDto;
 }

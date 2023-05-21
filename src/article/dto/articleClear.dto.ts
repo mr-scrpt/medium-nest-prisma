@@ -1,6 +1,5 @@
 import { UserClearDto } from '@app/user/dto/userClear.dto';
-import { UserOutDto } from '@app/user/dto/userOut.dto';
-import { UserEntity } from '@app/user/entity/user.entity';
+// import { UserEntity } from '@app/user/entity/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
@@ -81,5 +80,5 @@ export class ArticleClearDto {
   // })
   // @IsNumber()
   // authorId: number;
-  author: UserOutDto;
+  author: UserClearDto;
 }

@@ -53,5 +53,5 @@ export class UserUpdateDto {
     description: 'The image of the User',
     required: false,
   })
-  image?: string;
+  readonly image?: string;
 }

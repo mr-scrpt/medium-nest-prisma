@@ -1,16 +1,16 @@
 import { Controller, Get, Headers, Post, Put, UseGuards } from '@nestjs/common';
 import { Body } from '@nestjs/common';
-import { UserRequestCreateDto } from '@app/user/dto/userRequestCreate.dto';
+import { UserRequestCreateDto } from '@app/user/dto/swagger/userRequestCreate.dto';
 import { ApiBody, ApiCreatedResponse, ApiHeader } from '@nestjs/swagger';
 import { UserService } from '@app/user/user.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
 import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
-import { UserRequestLoginDto } from '@app/user/dto/userRequestLogin.dto';
+import { UserRequestLoginDto } from '@app/user/dto/swagger/userRequestLogin.dto';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
-import { UserRequestUpdateDto } from './dto/userRequestUpdate.dto';
+import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
 
 @Controller()
 export class UserController {
