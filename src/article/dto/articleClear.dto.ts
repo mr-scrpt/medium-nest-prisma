@@ -1,10 +1,11 @@
+import { UserClearDto } from '@app/user/dto/userClear.dto';
+import { UserOutDto } from '@app/user/dto/userOut.dto';
 import { UserEntity } from '@app/user/entity/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsArray,
   IsDate,
-  IsBoolean,
   IsNumber,
   MinLength,
 } from 'class-validator';
@@ -74,10 +75,11 @@ export class ArticleClearDto {
   @IsNumber()
   favoritesCount: number;
 
-  @ApiProperty({
-    example: 1,
-    description: 'Id of the author of the article',
-  })
-  @IsNumber()
-  authorId: number;
+  // @ApiProperty({
+  //   example: 1,
+  //   description: 'Id of the author of the article',
+  // })
+  // @IsNumber()
+  // authorId: number;
+  author: UserOutDto;
 }

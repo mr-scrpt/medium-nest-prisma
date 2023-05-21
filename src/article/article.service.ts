@@ -18,21 +18,13 @@ export class ArticleService {
   async createArticle(
     user: UserEntity,
     articleCreateDto: ArticleCreateDto,
-  ): Promise<ArticleEntity> {
-    // const article = new ArticleEntity();
-    // const slug = slugify(articleCreateDto.title, {
-    //   remove: undefined,
-    //   lower: false,
-    //   strict: false,
-    //   locale: 'vi',
-    //   trim: true,
-    // });
+  ): Promise<ArticleClearDto> {
     const slug = this.common.slugGenerator(articleCreateDto.title);
 
     const articleExist = await this.checkArticleExist(slug);
     if (articleExist) {
       throw new HttpException(
-        'Article already exist',
+        'An article with this slug already exists',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
@@ -44,19 +36,33 @@ export class ArticleService {
     const articleCreated = await this.prisma.article.create({
       data: data,
       include: {
-        author: true,
+        author: {
+          select: {
+            username: true,
+            email: true,
+            bio: true,
+            image: true,
+          },
+        },
       },
     });
     return articleCreated;
   }
 
-  async getArticleBySlug(slug: string): Promise<ArticleEntity> {
+  async getArticleBySlug(slug: string): Promise<ArticleClearDto> {
     const article = await this.prisma.article.findUnique({
       where: {
         slug: slug,
       },
       include: {
-        author: true,
+        author: {
+          select: {
+            username: true,
+            email: true,
+            bio: true,
+            image: true,
+          },
+        },
       },
     });
     return article;
@@ -70,7 +76,7 @@ export class ArticleService {
     return true;
   }
 
-  buildArticleResponse(article: ArticleEntity): ArticleBuildResponseDto {
+  buildArticleResponse(article: ArticleClearDto): ArticleBuildResponseDto {
     return { article };
   }
 }
