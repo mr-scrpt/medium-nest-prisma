@@ -44,7 +44,7 @@ export class ArticleClearDto {
     description: 'Tags to new article',
   })
   @IsArray()
-  tagList?: string[];
+  tagList: string[];
 
   @ApiProperty({
     example: '2021-01-01T00:00:00.000Z',
@@ -60,12 +60,12 @@ export class ArticleClearDto {
   @IsDate()
   updatedAt: Date;
 
-  @ApiProperty({
-    example: true,
-    description: 'Is the article favorited by the user',
-  })
-  @IsBoolean()
-  favorited: boolean;
+  // @ApiProperty({
+  //   example: true,
+  //   description: 'Is the article favorited by the user',
+  // })
+  // @IsBoolean()
+  // favorited: boolean;
 
   @ApiProperty({
     example: 0,
@@ -74,5 +74,10 @@ export class ArticleClearDto {
   @IsNumber()
   favoritesCount: number;
 
-  author: UserEntity;
+  @ApiProperty({
+    example: 1,
+    description: 'Id of the author of the article',
+  })
+  @IsNumber()
+  authorId: number;
 }

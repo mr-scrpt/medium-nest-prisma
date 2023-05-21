@@ -66,10 +66,6 @@ export class ArticleService {
   }
 
   buildArticleResponse(article: ArticleEntity): ArticleBuildResponseDto {
-    return {
-      article: {
-        ...article,
-      },
-    };
+    return { article };
   }
 }
