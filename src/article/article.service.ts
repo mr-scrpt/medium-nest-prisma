@@ -6,23 +6,28 @@ import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.d
 import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
 import { ArticleEntity } from '@app/article/entity/article.entity';
 import slugify from 'slugify';
+import { CommonService } from '@app/common/common.service';
 
 @Injectable()
 export class ArticleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly common: CommonService,
+  ) {}
 
   async createArticle(
     user: UserEntity,
     articleCreateDto: ArticleCreateDto,
   ): Promise<ArticleEntity> {
     // const article = new ArticleEntity();
-    const slug = slugify(articleCreateDto.title, {
-      remove: undefined,
-      lower: false,
-      strict: false,
-      locale: 'vi',
-      trim: true,
-    });
+    // const slug = slugify(articleCreateDto.title, {
+    //   remove: undefined,
+    //   lower: false,
+    //   strict: false,
+    //   locale: 'vi',
+    //   trim: true,
+    // });
+    const slug = this.common.slugGenerator(articleCreateDto.title);
 
     const articleExist = await this.checkArticleExist(slug);
     if (articleExist) {
