@@ -65,10 +65,10 @@ export class ArticleService {
     return true;
   }
 
-  buildArticleResponse(articleDto: ArticleClearDto): ArticleBuildResponseDto {
+  buildArticleResponse(article: ArticleEntity): ArticleBuildResponseDto {
     return {
       article: {
-        ...articleDto,
+        ...article,
       },
     };
   }

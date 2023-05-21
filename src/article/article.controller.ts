@@ -28,15 +28,13 @@ export class ArticleController {
   async createArticle(
     @Headers('Authorization') auth: string | undefined,
     @Body() articleCreateDto: ArticleCreateDto,
-  ): Promise<any> {
+  ): Promise<ArticleBuildResponseDto> {
     const user = await this.userService.getUserByToken(auth);
     const article = await this.articleService.createArticle(
       user,
       articleCreateDto,
     );
 
-    // // return this.articleService.buildArticleResponse(article);
-    // return article;
-    return article;
+    return this.articleService.buildArticleResponse(article);
   }
 }

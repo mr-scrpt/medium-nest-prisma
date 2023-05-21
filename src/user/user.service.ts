@@ -177,8 +177,8 @@ export class UserService {
     });
   }
 
-  buildUserResponse(userDto: UserEntity): UserBuildResponseDto {
-    const { id, username, email, bio, image } = userDto;
+  buildUserResponse(user: UserEntity): UserBuildResponseDto {
+    const { id, username, email, bio, image } = user;
     const token = this.authService.generateJWT(id.toString());
     return {
       user: {
