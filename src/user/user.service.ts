@@ -8,7 +8,6 @@ import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { JwtPayload } from 'jsonwebtoken';
 import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
-import { UserClearDto } from './dto/userClear.dto';
 import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 import { CommonService } from '@app/common/common.service';
 
@@ -43,8 +42,7 @@ export class UserService {
     id: number,
     updateUserDto: UserUpdateDto,
   ): Promise<UserEntity> {
-    const IsNotEmptyObject =
-      updateUserDto && this.common.IsNotEmptyObject(updateUserDto);
+    const IsNotEmptyObject = this.common.IsNotEmptyObject(updateUserDto);
     if (!IsNotEmptyObject) {
       throw new HttpException(
         'At least one field must be filled',

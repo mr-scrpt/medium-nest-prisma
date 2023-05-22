@@ -136,8 +136,8 @@ export class ArticleService {
     }
 
     const data = {
-      slug: slugNew,
       ...articleUpdatedDto,
+      slug: slugNew,
     };
 
     const articleUpdated = await this.prisma.article.update({
