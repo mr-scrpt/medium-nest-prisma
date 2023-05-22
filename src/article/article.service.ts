@@ -6,12 +6,14 @@ import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.d
 import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
 import { CommonService } from '@app/common/common.service';
 import { authorBaseSelect } from '@app/article/article.select';
+import { UserService } from '@app/user/user.service';
 
 @Injectable()
 export class ArticleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly common: CommonService,
+    private readonly user: UserService,
   ) {}
 
   async createArticle(
@@ -57,13 +59,10 @@ export class ArticleService {
     return article;
   }
 
-  async deleteArticleBySlug(
-    id: number,
-    slug: string,
-  ): Promise<ArticleClearDto> {
-    const article = await this.prisma.article.delete({
+  async deleteArticleBySlug(id: number, slug: string): Promise<void> {
+    const article = await this.prisma.article.findUnique({
       where: {
-        slug: slug,
+        slug,
       },
       include: {
         author: {
@@ -72,7 +71,22 @@ export class ArticleService {
       },
     });
 
-    return article;
+    if (!article) {
+      throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (article.authorId !== id) {
+      throw new HttpException(
+        'You are not the author of this article',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.prisma.article.delete({
+      where: {
+        slug: slug,
+      },
+    });
   }
 
   async checkArticleExist(slug: string): Promise<boolean> {
