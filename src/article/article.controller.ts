@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   UseGuards,
   Body,
   Headers,
@@ -13,9 +14,10 @@ import { ArticleService } from '@app/article/article.service';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 import { UserService } from '@app/user/user.service';
-import { ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
 import { ArticleBuildResponseDto } from './dto/articleBuildResponse.dto';
 
+@ApiTags('article')
 @Controller('article')
 export class ArticleController {
   constructor(
@@ -42,7 +44,6 @@ export class ArticleController {
   }
 
   @Get(':slug')
-  @ApiBody({ type: String })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
   @UsePipes(new ValidationPipe())
   async getArticleBySlug(
@@ -50,5 +51,16 @@ export class ArticleController {
   ): Promise<ArticleBuildResponseDto> {
     const article = await this.articleService.getArticleBySlug(slug);
     return this.articleService.buildArticleResponse(article);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':slug')
+  @UsePipes(new ValidationPipe())
+  async deleteArticleBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+  ): Promise<void> {
+    const { id } = await this.userService.getUserByToken(auth);
+    await this.articleService.deleteArticleBySlug(id, slug);
   }
 }

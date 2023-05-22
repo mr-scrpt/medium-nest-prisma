@@ -57,6 +57,24 @@ export class ArticleService {
     return article;
   }
 
+  async deleteArticleBySlug(
+    id: number,
+    slug: string,
+  ): Promise<ArticleClearDto> {
+    const article = await this.prisma.article.delete({
+      where: {
+        slug: slug,
+      },
+      include: {
+        author: {
+          select: authorBaseSelect,
+        },
+      },
+    });
+
+    return article;
+  }
+
   async checkArticleExist(slug: string): Promise<boolean> {
     const article = await this.getArticleBySlug(slug);
     if (!article) {

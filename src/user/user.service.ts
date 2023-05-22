@@ -8,6 +8,8 @@ import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { JwtPayload } from 'jsonwebtoken';
 import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
+import { UserClearDto } from './dto/userClear.dto';
+import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 
 @Injectable({})
 export class UserService {
@@ -169,12 +171,17 @@ export class UserService {
     // return decodedToken['id'];
   }
 
-  private async getUserById(id: number): Promise<UserEntity> {
-    return await this.prisma.user.findUnique({
+  async getUserById(id: number): Promise<UserEntity> {
+    const user = await this.prisma.user.findUnique({
       where: {
         id,
       },
     });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return user;
   }
 
   buildUserResponse(user: UserEntity): UserBuildResponseDto {
@@ -187,6 +194,17 @@ export class UserService {
         bio,
         image,
         token,
+      },
+    };
+  }
+  buildUserClearResponse(user: UserEntity): UserBuildClearResponseDto {
+    const { username, email, bio, image } = user;
+    return {
+      user: {
+        username,
+        email,
+        bio,
+        image,
       },
     };
   }

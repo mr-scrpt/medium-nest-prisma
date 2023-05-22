@@ -1,17 +1,33 @@
-import { Controller, Get, Headers, Post, Put, UseGuards } from '@nestjs/common';
-import { Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Put,
+  Body,
+  Param,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { UserRequestCreateDto } from '@app/user/dto/swagger/userRequestCreate.dto';
-import { ApiBody, ApiCreatedResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiTags,
+  ApiCreatedResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { UserService } from '@app/user/user.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
-import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { UserRequestLoginDto } from '@app/user/dto/swagger/userRequestLogin.dto';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
+import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 
+@ApiTags('user')
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -52,6 +68,15 @@ export class UserController {
   ): Promise<UserBuildResponseDto> {
     const user = await this.userService.getUserByToken(auth);
     return this.userService.buildUserResponse(user);
+  }
+
+  @Get('user/:id')
+  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  async getUserById(
+    @Param('id') id: number,
+  ): Promise<UserBuildClearResponseDto> {
+    const user = await this.userService.getUserById(+id);
+    return this.userService.buildUserClearResponse(user);
   }
 
   @UseGuards(AuthGuard)
