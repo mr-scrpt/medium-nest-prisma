@@ -13,4 +13,8 @@ export class CommonService {
   slugGenerator(str: string): string {
     return slugify(str, slugifyConfig);
   }
+
+  IsNotEmptyObject(obj: object): boolean {
+    return Object.keys(obj).length !== 0;
+  }
 }

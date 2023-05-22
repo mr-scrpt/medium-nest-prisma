@@ -10,12 +10,14 @@ import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserClearDto } from './dto/userClear.dto';
 import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
+import { CommonService } from '@app/common/common.service';
 
 @Injectable({})
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private authService: AuthService,
+    private common: CommonService,
   ) {}
   async createUsers(userCreateDto: UserCreateDto): Promise<UserEntity> {
     const { username, email, password } = userCreateDto;
@@ -41,6 +43,14 @@ export class UserService {
     id: number,
     updateUserDto: UserUpdateDto,
   ): Promise<UserEntity> {
+    const IsNotEmptyObject =
+      updateUserDto && this.common.IsNotEmptyObject(updateUserDto);
+    if (!IsNotEmptyObject) {
+      throw new HttpException(
+        'At least one field must be filled',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
     const { password, passwordOld, email, username } = updateUserDto;
 
     if ((password && !passwordOld) || (!password && passwordOld)) {

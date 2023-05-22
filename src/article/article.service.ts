@@ -7,6 +7,7 @@ import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
 import { CommonService } from '@app/common/common.service';
 import { authorBaseSelect } from '@app/article/article.select';
 import { UserService } from '@app/user/user.service';
+import { ArticleUpdateDto } from '@app/article/dto/articleUpdate.dto';
 
 @Injectable()
 export class ArticleService {
@@ -87,6 +88,73 @@ export class ArticleService {
         slug: slug,
       },
     });
+  }
+
+  async updateArticleBySlug(
+    id: number,
+    slug: string,
+    articleUpdatedDto: ArticleUpdateDto,
+  ): Promise<ArticleClearDto> {
+    const IsNotEmptyObject =
+      articleUpdatedDto && this.common.IsNotEmptyObject(articleUpdatedDto);
+    if (!IsNotEmptyObject) {
+      throw new HttpException(
+        'At least one field must be filled',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    const article = await this.prisma.article.findUnique({
+      where: {
+        slug,
+      },
+      include: {
+        author: {
+          select: authorBaseSelect,
+        },
+      },
+    });
+
+    if (!article) {
+      throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (article.authorId !== id) {
+      throw new HttpException(
+        'You are not the author of this article',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const slugNew = this.common.slugGenerator(articleUpdatedDto.title);
+    const existSlug = await this.checkArticleExist(slugNew);
+
+    if (existSlug) {
+      throw new HttpException(
+        'An article with this slug already exists',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    const data = {
+      slug: slugNew,
+      ...articleUpdatedDto,
+    };
+
+    const articleUpdated = await this.prisma.article.update({
+      where: {
+        slug: slug,
+      },
+      data: {
+        // updatedAt: new Date(),
+        ...data,
+      },
+      include: {
+        author: {
+          select: authorBaseSelect,
+        },
+      },
+    });
+    return articleUpdated;
   }
 
   async checkArticleExist(slug: string): Promise<boolean> {
