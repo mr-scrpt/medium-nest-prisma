@@ -4,9 +4,8 @@ import { PrismaService } from '@app/prisma/prisma.service';
 import { UserEntity } from '@app/user/entity/user.entity';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
 import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
-import { ArticleEntity } from '@app/article/entity/article.entity';
-import slugify from 'slugify';
 import { CommonService } from '@app/common/common.service';
+import { authorBaseSelect } from '@app/article/article.select';
 
 @Injectable()
 export class ArticleService {
@@ -37,12 +36,7 @@ export class ArticleService {
       data: data,
       include: {
         author: {
-          select: {
-            username: true,
-            email: true,
-            bio: true,
-            image: true,
-          },
+          select: authorBaseSelect,
         },
       },
     });
@@ -56,12 +50,7 @@ export class ArticleService {
       },
       include: {
         author: {
-          select: {
-            username: true,
-            email: true,
-            bio: true,
-            image: true,
-          },
+          select: authorBaseSelect,
         },
       },
     });

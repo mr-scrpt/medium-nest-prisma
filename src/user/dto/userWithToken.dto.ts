@@ -1,4 +1,4 @@
-import { UserClearDto } from './userClear.dto';
+import { UserClearDto } from '@app/user/dto/userClear.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
