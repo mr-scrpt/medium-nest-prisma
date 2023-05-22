@@ -10,6 +10,7 @@ import {
   UsePipes,
   Param,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ArticleService } from '@app/article/article.service';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
@@ -27,6 +28,17 @@ export class ArticleController {
     private readonly articleService: ArticleService,
     private readonly userService: UserService,
   ) {}
+
+  @Get()
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto, isArray: true })
+  async findAll(
+    @Headers('Authorization') auth: string | undefined,
+    @Query() query: any,
+  ): Promise<any> {
+    const user = await this.userService.getUserByToken(auth);
+    const articles = await this.articleService.findAll(user, query);
+    return articles;
+  }
 
   @UseGuards(AuthGuard)
   @Post()

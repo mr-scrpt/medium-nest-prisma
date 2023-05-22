@@ -17,6 +17,20 @@ export class ArticleService {
     private readonly user: UserService,
   ) {}
 
+  async findAll(user: UserEntity, query: any): Promise<any> {
+    const { offset, limit } = query;
+    const articles = await this.prisma.article.findMany({
+      take: limit,
+      skip: offset,
+      include: {
+        author: {
+          select: authorBaseSelect,
+        },
+      },
+    });
+    console.log('article lis', articles);
+    return articles;
+  }
   async createArticle(
     user: UserEntity,
     articleCreateDto: ArticleCreateDto,
@@ -95,8 +109,7 @@ export class ArticleService {
     slug: string,
     articleUpdatedDto: ArticleUpdateDto,
   ): Promise<ArticleClearDto> {
-    const IsNotEmptyObject =
-      articleUpdatedDto && this.common.IsNotEmptyObject(articleUpdatedDto);
+    const IsNotEmptyObject = this.common.IsNotEmptyObject(articleUpdatedDto);
     if (!IsNotEmptyObject) {
       throw new HttpException(
         'At least one field must be filled',
