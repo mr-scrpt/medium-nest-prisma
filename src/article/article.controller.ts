@@ -20,6 +20,9 @@ import { ApiBody, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
 import { ArticleUpdateDto } from '@app/article/dto/articleUpdate.dto';
 import { ArticleRequestUpdateDto } from '@app/article/dto/swagger/articleRequestUpdate.dto';
+import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
+import { UserEntity } from '@app/user/entity/user.entity';
+import { articleQueryParams } from './article.select';
 
 @ApiTags('article')
 @Controller('article')
@@ -30,14 +33,25 @@ export class ArticleController {
   ) {}
 
   @Get()
-  @ApiCreatedResponse({ type: ArticleBuildResponseDto, isArray: true })
-  async findAll(
+  @ApiCreatedResponse({ type: ArticleFeedBuildResponseDto })
+  async findAllByParams(
     @Headers('Authorization') auth: string | undefined,
     @Query() query: any,
-  ): Promise<any> {
-    const user = await this.userService.getUserByToken(auth);
-    const articles = await this.articleService.findAll(user, query);
-    return articles;
+  ): Promise<ArticleFeedBuildResponseDto> {
+    let user: UserEntity | undefined;
+    if (!auth) {
+      user = await this.userService.getUserByToken(auth);
+    }
+    const { offset, limit, field, direction } = query;
+    const settingPagination = { limit, offset };
+    const settingOrder = { field, direction };
+    const params = articleQueryParams(settingPagination, settingOrder);
+    const articleFeed = await this.articleService.findFeedByQuery(user, params);
+    const articlesCount = this.articleService.countFeed(articleFeed);
+    return this.articleService.buildArticlesFeedResponse(
+      articleFeed,
+      articlesCount,
+    );
   }
 
   @UseGuards(AuthGuard)

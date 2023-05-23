@@ -17,20 +17,31 @@ export class ArticleService {
     private readonly user: UserService,
   ) {}
 
-  async findAll(user: UserEntity, query: any): Promise<any> {
-    const { offset, limit } = query;
+  async findFeedByQuery(
+    user: UserEntity,
+    params: any,
+  ): Promise<ArticleClearDto[]> {
+    const { offset, limit, orderBy } = params;
+    console.dir({ params });
+    console.dir({ orderBy });
     const articles = await this.prisma.article.findMany({
       take: limit,
       skip: offset,
+      orderBy: orderBy,
       include: {
         author: {
           select: authorBaseSelect,
         },
       },
     });
-    console.log('article lis', articles);
     return articles;
   }
+
+  countFeed(articleFeed: ArticleClearDto[]): number {
+    return articleFeed.length;
+    // return await this.prisma.article.count({ where: {} });
+  }
+
   async createArticle(
     user: UserEntity,
     articleCreateDto: ArticleCreateDto,
@@ -180,5 +191,9 @@ export class ArticleService {
 
   buildArticleResponse(article: ArticleClearDto): ArticleBuildResponseDto {
     return { article };
+  }
+
+  buildArticlesFeedResponse(articles: ArticleClearDto[], count: number): any {
+    return { articles, count };
   }
 }
