@@ -1,23 +1,51 @@
-export enum ArticleOrderDirectionEnum {
+export enum SortDirectionEnum {
   DESC = 'desc',
   ASC = 'asc',
 }
 
-export enum ArticleOrderFieldEnum {
+export enum SortByArticleEnum {
   TITLE = 'title',
   CREATED_AT = 'createdAt',
 }
 
-export interface IArticleSelect extends IArticlePageSelect {
-  orderBy: IArticleOrderSelect;
+type Nullable<T> = {
+  [K in keyof T]?: T[K];
+};
+
+type Required<T> = {
+  [K in keyof T]-?: T[K];
+};
+
+interface IQueryParamsBase {
+  limit?: number;
+  offset?: number;
+  orderBy?: SortByArticleEnum;
+  direction?: SortDirectionEnum;
+  tag?: string;
+  author?: string;
+  favorited?: string;
 }
 
-export interface IArticlePageSelect {
-  limit: number;
-  offset: number;
+interface IPagintionParamsBase
+  extends Omit<IQueryParamsBase, 'tag' | 'author'> {}
+
+interface IWhereParamsBase {
+  tagList?: {
+    has: string;
+  };
+  author?: {
+    username: string;
+  };
 }
 
-export interface IArticleOrderSelect {
-  field: ArticleOrderFieldEnum;
-  direction: ArticleOrderDirectionEnum;
-}
+export type IArtilceQueryParamsOptional = Nullable<IQueryParamsBase>;
+
+export type IArticleQueryParamsRequered = Required<IQueryParamsBase>;
+
+export type IArticlePagintionParamsRequered = Required<IPagintionParamsBase>;
+
+export type IArticlePagintionParamsOptional = Nullable<IPagintionParamsBase>;
+
+export type IArtilceWhereParamsOptional = Nullable<IWhereParamsBase>;
+
+export type IArticleWhereParamsRequered = Required<IWhereParamsBase>;

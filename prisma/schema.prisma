@@ -16,25 +16,37 @@ model Tag {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  username String    @unique
-  email    String    @unique @default("")
-  password String
-  bio      String?
-  image    String?
-  Article  Article[]
+  id        Int             @id @default(autoincrement())
+  username  String          @unique
+  email     String          @unique @default("")
+  password  String
+  bio       String?
+  image     String?
+  article   Article[]
+  favorites UserToArticle[]
 }
 
 model Article {
-  id             Int      @id @default(autoincrement())
-  slug           String   @unique
+  id             Int             @id @default(autoincrement())
+  slug           String          @unique
   title          String
-  description    String   @default("")
-  body           String   @default("")
+  description    String          @default("")
+  body           String          @default("")
   tagList        String[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  favoritesCount Int      @default(0)
-  author         User     @relation(fields: [authorId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  favoritesCount Int             @default(0)
+  favoritedBy    UserToArticle[]
+  author         User            @relation(fields: [authorId], references: [id])
   authorId       Int
+}
+
+model UserToArticle {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int
+
+  @@unique([userId, articleId])
 }

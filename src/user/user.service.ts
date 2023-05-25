@@ -143,12 +143,91 @@ export class UserService {
     });
   }
 
+  // async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
+  //   if (!tokenString) {
+  //     throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+  //   }
+  //   const id = this.getUserIdFromToken(tokenString);
+  //   return await this.getUserById(id);
+  // }
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
-    if (!tokenString) {
+    try {
+      const id = this.getUserIdFromToken(tokenString);
+      return await this.getUserById(id);
+    } catch (error) {
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
+  }
+
+  async checkAndGetUserByToken(
+    tokenString: string | undefined,
+  ): Promise<UserEntity> {
+    try {
+      const id = this.getUserIdFromToken(tokenString);
+      return await this.getUserById(id);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async getUserById(id: number): Promise<UserEntity> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        favorites: true,
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return user;
+  }
+
+  async addFavoriteById(idUser: number, idArticle: number): Promise<any> {
+    const article: any = await this.prisma.article.update({
+      where: { id: idArticle },
+      data: {
+        favoritedBy: {
+          connect: { id: idUser },
+        },
+      },
+      include: {
+        author: {
+          select: {
+            email: true,
+            username: true,
+            bio: true,
+            image: true,
+          },
+        },
+        favoritedBy: { select: { id: true } },
+      },
+    });
+    console.dir({ article });
+  }
+
+  async getUserIfExistsByToken(
+    tokenString: string | undefined,
+  ): Promise<UserEntity | null> {
+    if (!tokenString) {
+      return null;
+    }
     const id = this.getUserIdFromToken(tokenString);
-    return await this.getUserById(id);
+    const user = await this.getUserById(id);
+    return user;
+  }
+
+  async checkUserExistsById(id: number): Promise<boolean> {
+    const userExists = await this.prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    return !!userExists;
   }
 
   private async checkUserExists(
@@ -165,11 +244,19 @@ export class UserService {
   }
 
   private getToken(tokenString: string): string {
-    return tokenString.split(' ')[1];
+    const token = tokenString.split(' ')[1];
+    if (!token) {
+      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    }
+    return token;
   }
 
   private decodeToken(tokenString: string): string | JwtPayload {
     const token = this.getToken(tokenString);
+    if (!token) {
+      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    }
+
     return this.authService.decodeJWT(token);
   }
 
@@ -177,19 +264,6 @@ export class UserService {
     const { id } = this.decodeToken(tokenString) as TokenDecode;
     return +id;
     // return decodedToken['id'];
-  }
-
-  async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    return user;
   }
 
   buildUserResponse(user: UserEntity): UserBuildResponseDto {
@@ -216,4 +290,45 @@ export class UserService {
       },
     };
   }
+
+  // async getUserByTokenWithoutExeption(
+  //   tokenString: string | undefined,
+  // ): Promise<UserEntity | null> {
+  //   if (!tokenString) {
+  //     return null;
+  //   }
+  //   const id = this.getUserIdFromTokenWithoutExeption(tokenString);
+  //   if (!id) {
+  //     return null;
+  //   }
+  //   return await this.getUserById(id);
+  // }
+
+  // private getUserIdFromTokenWithoutExeption(tokenString: string): number {
+  //   const result = this.decodeTokenWithoutExeption(tokenString) as TokenDecode;
+  //   if (!result) {
+  //     return null;
+  //   }
+  //   return +result.id;
+  //   // return decodedToken['id'];
+  // }
+  // private decodeTokenWithoutExeption(
+  //   tokenString: string,
+  // ): string | JwtPayload | null {
+  //   const token = this.getTokenWithoutExeption(tokenString);
+  //   if (!token) {
+  //     console.log('token is null');
+  //     return null;
+  //   }
+  //   console.log('token is not null', token);
+
+  //   return this.authService.decodeJWTWithoutExeption(token);
+  // }
+  // private getTokenWithoutExeption(tokenString: string): string {
+  //   const token = tokenString.split(' ')[1];
+  //   if (!token) {
+  //     return null;
+  //   }
+  //   return token;
+  // }
 }

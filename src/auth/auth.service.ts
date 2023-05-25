@@ -88,7 +88,6 @@ export class AuthService {
       return verify(token, process.env.JWT_SECRET);
     } catch (error) {
       throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
-      return null;
     }
   };
 }

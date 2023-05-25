@@ -8,8 +8,14 @@ import {
   IsNumber,
   MinLength,
 } from 'class-validator';
+import { ArticleUserDto } from './articleUserDto';
 
 export class ArticleClearDto {
+  @ApiProperty({
+    example: 1,
+    description: 'Id of the article',
+  })
+  id: number;
   @ApiProperty({
     example: 'slug_url_string',
     description: 'Slug to new article',
@@ -60,12 +66,11 @@ export class ArticleClearDto {
   @IsDate()
   updatedAt: Date;
 
-  // @ApiProperty({
-  //   example: true,
-  //   description: 'Is the article favorited by the user',
-  // })
-  // @IsBoolean()
-  // favorited: boolean;
+  @ApiProperty({
+    example: true,
+    description: 'If the user is following the author of the article',
+  })
+  favorited: boolean;
 
   @ApiProperty({
     example: 0,
@@ -74,11 +79,6 @@ export class ArticleClearDto {
   @IsNumber()
   favoritesCount: number;
 
-  // @ApiProperty({
-  //   example: 1,
-  //   description: 'Id of the author of the article',
-  // })
-  // @IsNumber()
-  // authorId: number;
-  author: UserClearDto;
+  @ApiProperty()
+  author: ArticleUserDto;
 }
