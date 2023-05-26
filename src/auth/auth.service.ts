@@ -84,10 +84,6 @@ export class AuthService {
   };
 
   decodeJWT = (token: string): JwtPayload | string => {
-    try {
-      return verify(token, process.env.JWT_SECRET);
-    } catch (error) {
-      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
-    }
+    return verify(token, process.env.JWT_SECRET);
   };
 }

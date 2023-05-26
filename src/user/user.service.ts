@@ -152,6 +152,7 @@ export class UserService {
   // }
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
     const id = this.getUserIdFromToken(tokenString);
+
     return await this.getUserById(id);
     // try {
     //   const id = this.getUserIdFromToken(tokenString);
@@ -182,6 +183,7 @@ export class UserService {
       },
     });
 
+    // console.log('User', user);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -247,25 +249,19 @@ export class UserService {
 
   private getToken(tokenString: string): string {
     const token = tokenString.split(' ')[1];
-    if (!token) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-    }
     return token;
   }
 
   private decodeToken(tokenString: string): string | JwtPayload {
     const token = this.getToken(tokenString);
-    if (!token) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-    }
 
     return this.authService.decodeJWT(token);
   }
 
   private getUserIdFromToken(tokenString: string): number {
+    console.log('tokenString', tokenString);
     const { id } = this.decodeToken(tokenString) as TokenDecode;
     return +id;
-    // return decodedToken['id'];
   }
 
   buildUserResponse(user: UserEntity): UserBuildResponseDto {

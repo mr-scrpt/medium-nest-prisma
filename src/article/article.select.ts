@@ -7,6 +7,7 @@
 // } from './interface/query.interface';
 
 export const authorBaseSelect = {
+  id: true,
   username: true,
   bio: true,
   image: true,

@@ -6,7 +6,6 @@ import { UserService } from '@app/user/user.service';
 import { IArticleQueryParamsRequered } from './interface/query.interface';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { ArticleRepository } from './article.repository';
-import { IArticleWithAuthorAndFavoritedBy } from './interface/db.interface';
 import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleDBDto } from './dto/articleCreateDB.dto';
@@ -94,6 +93,29 @@ export class ArticleService {
     return buildData;
   }
 
+  async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
+    const currentUserId = await this.getCurrentUserId(token);
+    console.log('currentUserId', currentUserId);
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
+    console.log(article.author.id, currentUserId);
+    if (article.author.id !== currentUserId) {
+      throw new HttpException(
+        'You are not the author of this article',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    await this.articleRepository.deleteArticleBySlug(slug);
+  }
+
   // private async getCountAllArticle(): Promise<number> {
   //   return await this.articleRepository.countFeed();
   // }
@@ -120,6 +142,7 @@ export class ArticleService {
   private async getCurrentUserId(token: Token): Promise<number | null> {
     try {
       const { id } = await this.user.getUserByToken(token);
+      console.log('id', id);
       return id;
     } catch (error) {
       console.error('Error decoding token:', error);

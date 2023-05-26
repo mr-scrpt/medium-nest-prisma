@@ -65,16 +65,15 @@ export class ArticleController {
     return await this.articleService.getArticleBySlugAndToken(slug, auth);
   }
 
-  // @UseGuards(AuthGuard)
-  // @Delete(':slug')
-  // @UsePipes(new ValidationPipe())
-  // async deleteArticleBySlug(
-  //   @Headers('Authorization') auth: string | undefined,
-  //   @Param('slug') slug: string,
-  // ): Promise<void> {
-  //   const { id } = await this.userService.getUserByToken(auth);
-  //   await this.articleService.deleteArticleBySlug(id, slug);
-  // }
+  @UseGuards(AuthGuard)
+  @Delete(':slug')
+  @UsePipes(new ValidationPipe())
+  async deleteArticleBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+  ): Promise<void> {
+    return await this.articleService.deleteArticleBySlugAndToken(slug, auth);
+  }
 
   // @UseGuards(AuthGuard)
   // @Put(':slug')

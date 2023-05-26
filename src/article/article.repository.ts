@@ -78,6 +78,14 @@ export class ArticleRepository {
     return articleCreated as ArticleDBDto;
   }
 
+  async deleteArticleBySlug(slug: string): Promise<void> {
+    await this.prisma.article.delete({
+      where: {
+        slug,
+      },
+    });
+  }
+
   async countFeed(): Promise<number> {
     const count = await this.prisma.article.count();
     return count;
