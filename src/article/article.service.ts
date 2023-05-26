@@ -42,6 +42,25 @@ export class ArticleService {
     return buildData;
   }
 
+  async getArticleBySlugAndToken(
+    slug: string,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = await this.getCurrentUserId(token);
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const data = this.getArticleWithFavoritesData(article, currentUserId);
+    const buildData = this.buildArticleResponse(data);
+    return buildData as ArticleBuildResponseDto;
+  }
+
   async createArticle(
     articleCreateDto: ArticleCreateDto,
     token: Token,
@@ -75,25 +94,6 @@ export class ArticleService {
     return buildData;
   }
 
-  async getArticleBySlugAndToken(
-    slug: string,
-    token: Token,
-  ): Promise<ArticleBuildResponseDto> {
-    const currentUserId = await this.getCurrentUserId(token);
-    const article = await this.articleRepository.getArticleBySlug(slug);
-
-    if (!article) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    const data = this.getArticleWithFavoritesData(article, currentUserId);
-    const buildData = this.buildArticleResponse(data);
-    return buildData as ArticleBuildResponseDto;
-  }
-
   // private async getCountAllArticle(): Promise<number> {
   //   return await this.articleRepository.countFeed();
   // }
@@ -112,14 +112,24 @@ export class ArticleService {
   //   );
   // }
 
-  private async getCurrentUserId(token: Token): Promise<number> {
-    const { id } = await this.user.getUserByToken(token);
-    return id;
+  // private async getCurrentUserId(token: Token): Promise<number> {
+  //   const { id } = await this.user.getUserByToken(token);
+  //   return id;
+  // }
+
+  private async getCurrentUserId(token: Token): Promise<number | null> {
+    try {
+      const { id } = await this.user.getUserByToken(token);
+      return id;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
   }
 
   private async getArticlesFeedWithFavoritesData(
     articles: ArticleDBDto[],
-    currentUserId: number,
+    currentUserId: number | null,
   ): Promise<ArticleClearDto[]> {
     return articles.map((article) => {
       return this.getArticleWithFavoritesData(article, currentUserId);
@@ -127,7 +137,7 @@ export class ArticleService {
   }
   private getArticleWithFavoritesData(
     article: ArticleDBDto,
-    currentUserId: number,
+    currentUserId: number | null,
   ): ArticleClearDto {
     const favorited = article.favoritedBy.some((user) => {
       return user.id === currentUserId;

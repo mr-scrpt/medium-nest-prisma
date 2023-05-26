@@ -151,12 +151,14 @@ export class UserService {
   //   return await this.getUserById(id);
   // }
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
-    try {
-      const id = this.getUserIdFromToken(tokenString);
-      return await this.getUserById(id);
-    } catch (error) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-    }
+    const id = this.getUserIdFromToken(tokenString);
+    return await this.getUserById(id);
+    // try {
+    //   const id = this.getUserIdFromToken(tokenString);
+    //   return await this.getUserById(id);
+    // } catch (error) {
+    //   throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    // }
   }
 
   async checkAndGetUserByToken(
