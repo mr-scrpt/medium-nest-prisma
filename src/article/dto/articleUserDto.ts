@@ -19,9 +19,9 @@ export class ArticleUserDto {
   })
   image: string;
 
-  @ApiProperty({
-    example: true,
-    description: 'If the user is following the author of the article',
-  })
-  following: boolean;
+  // @ApiProperty({
+  //   example: true,
+  //   description: 'If the user is following the author of the article',
+  // })
+  // following: boolean;
 }

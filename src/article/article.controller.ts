@@ -31,12 +31,16 @@ export class ArticleController {
 
   @Get()
   @ApiCreatedResponse({ type: ArticleFeedBuildResponseDto })
-  async findAllByParams(
+  @UsePipes(new ValidationPipe())
+  async getArticleAll(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
   ): Promise<any> {
     const params = parseQueryParams(query);
-    return await this.articleService.getFeedByParamsAndToken(params, token);
+    return await this.articleService.getArticleAllByParamsAndToken(
+      params,
+      token,
+    );
   }
 
   // @UseGuards(AuthGuard)

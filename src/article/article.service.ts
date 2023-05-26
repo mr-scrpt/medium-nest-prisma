@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
 import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
 import { CommonService } from '@app/common/common.service';
@@ -17,17 +17,18 @@ export class ArticleService {
     private readonly articleRepository: ArticleRepository,
   ) {}
 
-  async getFeedByParamsAndToken(
+  async getArticleAllByParamsAndToken(
     queryParams: IArticleQueryParamsRequered,
     token: Token,
   ): Promise<ArticleFeedBuildResponseDto> {
     const currentUserId = await this.getCurrentUserId(token);
-    const params = this.prepareQueryParams(queryParams);
-    const where = this.prepareWhereParams(queryParams, currentUserId);
 
     const [articles, articleCount] = await Promise.all([
-      await this.articleRepository.getArticleFeed(params, where),
-      await this.getCountAllArticle(),
+      await this.articleRepository.getArticleAllByParams(
+        queryParams,
+        currentUserId,
+      ),
+      await this.articleRepository.countFeed(),
     ]);
 
     const data = await this.getArticleWithFavoritesData(
@@ -39,23 +40,46 @@ export class ArticleService {
     return buildData;
   }
 
-  private async getCountAllArticle(): Promise<number> {
-    return await this.articleRepository.countFeed();
-  }
+  // async createArticle(
+  //   articleClearDto: ArticleClearDto,
+  //   token: Token,
+  // ): Promise<ArticleBuildResponseDto> {
+  //   const slug = this.common.slugGenerator(articleCreateDto.title);
 
-  private prepareQueryParams(queryParams: IArticleQueryParamsRequered) {
-    return this.articleRepository.prepareQueryParams(queryParams);
-  }
+  //   const articleExist = await this.articleRepository.getArticleBySlug(slug);
+  //   if (articleExist) {
+  //     throw new HttpException(
+  //       'Article with this title already exist',
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
 
-  private prepareWhereParams(
-    queryParams: IArticleQueryParamsRequered,
-    currentUserId: number,
-  ) {
-    return this.articleRepository.prepareWhereParams(
-      queryParams,
-      currentUserId,
-    );
-  }
+  //   const currentUserId = await this.getCurrentUserId(token);
+  //   const article = await this.articleRepository.createArticle(
+  //     articleClearDto,
+  //     currentUserId,
+  //   );
+  //   const buildData = this.buildArticleResponse(article);
+  //   return buildData;
+  // }
+
+  // private async getCountAllArticle(): Promise<number> {
+  //   return await this.articleRepository.countFeed();
+  // }
+
+  // private prepareQueryParams(queryParams: IArticleQueryParamsRequered) {
+  //   return this.articleRepository.prepareQueryParams(queryParams);
+  // }
+
+  // private prepareWhereParams(
+  //   queryParams: IArticleQueryParamsRequered,
+  //   currentUserId: number,
+  // ) {
+  //   return this.articleRepository.prepareWhereParams(
+  //     queryParams,
+  //     currentUserId,
+  //   );
+  // }
 
   private async getCurrentUserId(token: Token): Promise<number> {
     const { id } = await this.user.getUserByToken(token);

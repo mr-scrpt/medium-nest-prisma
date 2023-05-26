@@ -2,26 +2,33 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IArticleQueryParamsRequered } from '@app/article/interface/query.interface';
-import { authorBaseSelect } from '@app/article/article.select';
+import {
+  authorBaseSelect,
+  favoritedBaseSelect,
+} from '@app/article/article.select';
 import { IArticleWithAuthorAndFavoritedBy } from './interface/db.interface';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArticleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getArticleFeed(
-    params: any,
-    where: any,
+  async getArticleAllByParams(
+    queryParams: IArticleQueryParamsRequered,
+    currentUserId: number,
   ): Promise<IArticleWithAuthorAndFavoritedBy[]> {
+    const params = this.prepareQueryParams(queryParams);
+    const where = this.prepareWhereParams(queryParams, currentUserId);
+    const includeParams = {
+      author: authorBaseSelect,
+      favoritedBy: favoritedBaseSelect,
+    };
+
+    const include = this.prepareIncludeParams(includeParams);
     const articles = await this.prisma.article.findMany({
       ...params,
       where,
-      include: {
-        author: {
-          select: authorBaseSelect,
-        },
-        favoritedBy: { select: { id: true } },
-      },
+      include,
     });
 
     return articles as IArticleWithAuthorAndFavoritedBy[];
@@ -32,10 +39,10 @@ export class ArticleRepository {
     return count;
   }
 
-  prepareWhereParams(
+  private prepareWhereParams(
     params: IArticleQueryParamsRequered,
     currentUserId: number,
-  ) {
+  ): Prisma.ArticleWhereInput {
     const { tag, author, favorited } = params;
     const favBool = favorited === 'true' ? true : false;
     const where = {
@@ -69,7 +76,9 @@ export class ArticleRepository {
     return where;
   }
 
-  prepareQueryParams(parms: IArticleQueryParamsRequered) {
+  private prepareQueryParams(
+    parms: IArticleQueryParamsRequered,
+  ): Prisma.ArticleFindManyArgs {
     const { offset, limit, orderBy, direction } = parms;
     return {
       take: limit,
@@ -78,5 +87,21 @@ export class ArticleRepository {
         [orderBy]: direction,
       },
     };
+  }
+
+  private prepareIncludeParams(
+    includeParams: Record<string, any>,
+  ): Prisma.ArticleInclude {
+    const include: Prisma.ArticleInclude = {};
+
+    for (const key in includeParams) {
+      if (Object.prototype.hasOwnProperty.call(includeParams, key)) {
+        include[key] = {
+          select: includeParams[key],
+        };
+      }
+    }
+
+    return include;
   }
 }

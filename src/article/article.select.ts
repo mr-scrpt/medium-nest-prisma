@@ -12,6 +12,12 @@ export const authorBaseSelect = {
   image: true,
 };
 
+export const favoritedBaseSelect = {
+  id: true,
+  userId: true,
+  articleId: true,
+};
+
 // export const articleQueryParams = (
 //   parms: IArticlePageSelect,
 //   order: IArticleOrderSelect,
