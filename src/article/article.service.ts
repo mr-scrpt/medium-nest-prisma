@@ -67,8 +67,8 @@ export class ArticleService {
   ): Promise<ArticleBuildResponseDto> {
     const slug = this.common.slugGenerator(articleCreateDto.title);
 
-    const articleExist = await this.articleRepository.checkArticleExist(slug);
-    if (articleExist) {
+    const articleExist = await this.articleRepository.getArticleBySlug(slug);
+    if (articleExist || articleExist.slug === slug) {
       throw new HttpException(
         'Article with this title already exist',
         HttpStatus.BAD_REQUEST,
@@ -129,25 +129,36 @@ export class ArticleService {
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = await this.getCurrentUserId(token);
-    const article = await this.articleRepository.getArticleBySlug(slug);
+    const slugNew = this.common.slugGenerator(articleUpdateDto.title);
+    const articleExist = await this.articleRepository.getArticleBySlug(slug);
 
-    if (article.author.id !== currentUserId) {
+    console.log(articleExist);
+    console.log(slugNew);
+    // const articleExist = await this.articleRepository.getArticleBySlug(slug);
+    if (!articleExist) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (articleExist.slug === slugNew) {
+      throw new HttpException(
+        'Article with this title already exist',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (articleExist.author.id !== currentUserId) {
       throw new HttpException(
         'You are not the author of this article',
         HttpStatus.FORBIDDEN,
       );
     }
 
-    if (!article) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
     try {
       const articleUpdate = await this.articleRepository.updateArticleBySlug(
         slug,
+        slugNew,
         articleUpdateDto,
       );
       const data = this.getArticleWithFavoritesData(

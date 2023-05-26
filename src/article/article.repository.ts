@@ -89,18 +89,25 @@ export class ArticleRepository {
 
   async updateArticleBySlug(
     slug: string,
+    slugNew: string,
     articleUpdateDto: ArticleUpdateDto,
   ): Promise<ArticleDBDto> {
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
     };
+
+    const data = {
+      ...articleUpdateDto,
+      slug: slugNew,
+    };
+
     const include = this.prepareIncludeParams(includeParams);
     const articleUpdated: unknown = await this.prisma.article.update({
       where: {
         slug,
       },
-      data: articleUpdateDto,
+      data,
       include,
     });
     return articleUpdated as ArticleDBDto;
