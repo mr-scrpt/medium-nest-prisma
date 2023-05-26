@@ -43,33 +43,27 @@ export class ArticleController {
     );
   }
 
-  // @UseGuards(AuthGuard)
-  // @Post()
-  // @ApiBody({ type: ArticleCreateDto })
-  // @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  // @UsePipes(new ValidationPipe())
-  // async createArticle(
-  //   @Headers('Authorization') auth: string | undefined,
-  //   @Body() articleCreateDto: ArticleCreateDto,
-  // ): Promise<ArticleBuildResponseDto> {
-  //   const user = await this.userService.getUserByToken(auth);
-  //   const article = await this.articleService.createArticle(
-  //     user,
-  //     articleCreateDto,
-  //   );
+  @UseGuards(AuthGuard)
+  @Post()
+  @ApiBody({ type: ArticleCreateDto })
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async createArticle(
+    @Headers('Authorization') auth: string | undefined,
+    @Body() articleCreateDto: ArticleCreateDto,
+  ): Promise<ArticleBuildResponseDto> {
+    return await this.articleService.createArticle(articleCreateDto, auth);
+  }
 
-  //   return this.articleService.buildArticleResponse(article);
-  // }
-
-  // @Get(':slug')
-  // @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  // @UsePipes(new ValidationPipe())
-  // async getArticleBySlug(
-  //   @Param('slug') slug: string,
-  // ): Promise<ArticleBuildResponseDto> {
-  //   const article = await this.articleService.getArticleBySlug(slug);
-  //   return this.articleService.buildArticleResponse(article);
-  // }
+  @Get(':slug')
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async getArticleBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+  ): Promise<ArticleBuildResponseDto> {
+    return await this.articleService.getArticleBySlugAndToken(slug, auth);
+  }
 
   // @UseGuards(AuthGuard)
   // @Delete(':slug')

@@ -2,6 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ArticleUserDto {
   @ApiProperty({
+    example: 1,
+    description: 'Id of the author of the article',
+  })
+  id: number;
+  @ApiProperty({
     example: 'username',
     description: 'Username of the author of the article',
   })

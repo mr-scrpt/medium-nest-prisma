@@ -8,6 +8,8 @@ import { Token } from '@app/auth/iterface/auth.interface';
 import { ArticleRepository } from './article.repository';
 import { IArticleWithAuthorAndFavoritedBy } from './interface/db.interface';
 import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
+import { ArticleCreateDto } from './dto/articleCreate.dto';
+import { ArticleDBDto } from './dto/articleCreateDB.dto';
 
 @Injectable()
 export class ArticleService {
@@ -31,7 +33,7 @@ export class ArticleService {
       await this.articleRepository.countFeed(),
     ]);
 
-    const data = await this.getArticleWithFavoritesData(
+    const data = await this.getArticlesFeedWithFavoritesData(
       articles,
       currentUserId,
     );
@@ -40,28 +42,57 @@ export class ArticleService {
     return buildData;
   }
 
-  // async createArticle(
-  //   articleClearDto: ArticleClearDto,
-  //   token: Token,
-  // ): Promise<ArticleBuildResponseDto> {
-  //   const slug = this.common.slugGenerator(articleCreateDto.title);
+  async createArticle(
+    articleCreateDto: ArticleCreateDto,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const slug = this.common.slugGenerator(articleCreateDto.title);
 
-  //   const articleExist = await this.articleRepository.getArticleBySlug(slug);
-  //   if (articleExist) {
-  //     throw new HttpException(
-  //       'Article with this title already exist',
-  //       HttpStatus.BAD_REQUEST,
-  //     );
-  //   }
+    const articleExist = await this.articleRepository.checkArticleExist(slug);
+    if (articleExist) {
+      throw new HttpException(
+        'Article with this title already exist',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
-  //   const currentUserId = await this.getCurrentUserId(token);
-  //   const article = await this.articleRepository.createArticle(
-  //     articleClearDto,
-  //     currentUserId,
-  //   );
-  //   const buildData = this.buildArticleResponse(article);
-  //   return buildData;
-  // }
+    const currentUserId = await this.getCurrentUserId(token);
+    const article = await this.articleRepository.createArticle(
+      articleCreateDto,
+      slug,
+      currentUserId,
+    );
+
+    if (!article) {
+      throw new HttpException(
+        'Article not created',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const data = this.getArticleWithFavoritesData(article, currentUserId);
+    const buildData = this.buildArticleResponse(data);
+    return buildData;
+  }
+
+  async getArticleBySlugAndToken(
+    slug: string,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = await this.getCurrentUserId(token);
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const data = this.getArticleWithFavoritesData(article, currentUserId);
+    const buildData = this.buildArticleResponse(data);
+    return buildData as ArticleBuildResponseDto;
+  }
 
   // private async getCountAllArticle(): Promise<number> {
   //   return await this.articleRepository.countFeed();
@@ -86,20 +117,26 @@ export class ArticleService {
     return id;
   }
 
-  private async getArticleWithFavoritesData(
-    articles: IArticleWithAuthorAndFavoritedBy[],
+  private async getArticlesFeedWithFavoritesData(
+    articles: ArticleDBDto[],
     currentUserId: number,
   ): Promise<ArticleClearDto[]> {
     return articles.map((article) => {
-      const favorited = article.favoritedBy.some((user) => {
-        return user.id === currentUserId;
-      });
-      delete article.favoritedBy;
-      return {
-        ...article,
-        favorited,
-      };
+      return this.getArticleWithFavoritesData(article, currentUserId);
     });
+  }
+  private getArticleWithFavoritesData(
+    article: ArticleDBDto,
+    currentUserId: number,
+  ): ArticleClearDto {
+    const favorited = article.favoritedBy.some((user) => {
+      return user.id === currentUserId;
+    });
+    delete article.favoritedBy;
+    return {
+      ...article,
+      favorited,
+    };
   }
 
   private buildArticleResponse(
@@ -110,8 +147,8 @@ export class ArticleService {
 
   private buildArticlesFeedResponse(
     articles: ArticleClearDto[],
-    count: number,
-  ): any {
-    return { articles, count };
+    articlesCount: number,
+  ): ArticleFeedBuildResponseDto {
+    return { articles, articlesCount };
   }
 }
