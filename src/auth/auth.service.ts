@@ -44,7 +44,6 @@ export class AuthService {
   hashPassword = (password: string): Promise<string> =>
     new Promise((resolve, reject) => {
       randomBytes(this.SALT_LEN, (err, salt) => {
-        console.log('pass in', password);
         if (err) {
           reject(err);
           return;

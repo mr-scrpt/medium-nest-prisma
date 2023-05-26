@@ -10,6 +10,7 @@ import { IArticleDBDto } from './interface/db.interface';
 import { Prisma } from '@prisma/client';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleDBDto } from './dto/articleCreateDB.dto';
+import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 
 @Injectable()
 export class ArticleRepository {
@@ -84,6 +85,25 @@ export class ArticleRepository {
         slug,
       },
     });
+  }
+
+  async updateArticleBySlug(
+    slug: string,
+    articleUpdateDto: ArticleUpdateDto,
+  ): Promise<ArticleDBDto> {
+    const includeParams = {
+      author: authorBaseSelect,
+      favoritedBy: favoritedBaseSelect,
+    };
+    const include = this.prepareIncludeParams(includeParams);
+    const articleUpdated: unknown = await this.prisma.article.update({
+      where: {
+        slug,
+      },
+      data: articleUpdateDto,
+      include,
+    });
+    return articleUpdated as ArticleDBDto;
   }
 
   async countFeed(): Promise<number> {

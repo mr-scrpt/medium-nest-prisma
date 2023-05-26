@@ -75,26 +75,30 @@ export class ArticleController {
     return await this.articleService.deleteArticleBySlugAndToken(slug, auth);
   }
 
-  // @UseGuards(AuthGuard)
-  // @Put(':slug')
-  // @ApiBody({ type: ArticleRequestUpdateDto })
-  // @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  // @UsePipes(new ValidationPipe())
-  // async updateArticleBySlug(
-  //   @Headers('Authorization') auth: string | undefined,
-  //   @Param('slug') slug: string,
-  //   @Body('article') articleUpdatedDto: ArticleUpdateDto,
-  // ): Promise<ArticleBuildResponseDto> {
-  //   console.log(articleUpdatedDto);
-  //   const { id } = await this.userService.getUserByToken(auth);
-  //   const article = await this.articleService.updateArticleBySlug(
-  //     id,
-  //     slug,
-  //     articleUpdatedDto,
-  //   );
+  @UseGuards(AuthGuard)
+  @Put(':slug')
+  @ApiBody({ type: ArticleRequestUpdateDto })
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async updateArticleBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+    @Body('article') articleUpdatedDto: ArticleUpdateDto,
+  ): Promise<ArticleBuildResponseDto> {
+    return await this.articleService.updateArticleBySlugAndToken(
+      slug,
+      articleUpdatedDto,
+      auth,
+    );
+    // const { id } = await this.userService.getUserByToken(auth);
+    // const article = await this.articleService.updateArticleBySlug(
+    //   id,
+    //   slug,
+    //   articleUpdatedDto,
+    // );
 
-  //   return this.articleService.buildArticleResponse(article);
-  // }
+    // return this.articleService.buildArticleResponse(article);
+  }
 
   // @UseGuards(AuthGuard)
   // @Post(':slug/favorite')

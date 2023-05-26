@@ -19,11 +19,16 @@ export class AuthGuard implements CanActivate {
       // return false;
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
+    console.log('tokenString before', tokenString);
 
-    const user = await this.userService.getUserByToken(tokenString);
-    if (!user) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    try {
+      await this.userService.getUserByToken(tokenString);
+      return true;
+    } catch (error) {
+      throw new HttpException(
+        'Token expired or incorrect',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
-    return true;
   }
 }

@@ -154,12 +154,6 @@ export class UserService {
     const id = this.getUserIdFromToken(tokenString);
 
     return await this.getUserById(id);
-    // try {
-    //   const id = this.getUserIdFromToken(tokenString);
-    //   return await this.getUserById(id);
-    // } catch (error) {
-    //   throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-    // }
   }
 
   async checkAndGetUserByToken(
@@ -259,7 +253,6 @@ export class UserService {
   }
 
   private getUserIdFromToken(tokenString: string): number {
-    console.log('tokenString', tokenString);
     const { id } = this.decodeToken(tokenString) as TokenDecode;
     return +id;
   }

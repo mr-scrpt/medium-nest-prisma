@@ -9,6 +9,7 @@ import { ArticleRepository } from './article.repository';
 import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleDBDto } from './dto/articleCreateDB.dto';
+import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 
 @Injectable()
 export class ArticleService {
@@ -95,10 +96,41 @@ export class ArticleService {
 
   async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
     const currentUserId = await this.getCurrentUserId(token);
-    console.log('currentUserId', currentUserId);
     const article = await this.articleRepository.getArticleBySlug(slug);
 
-    console.log(article.author.id, currentUserId);
+    if (article?.author?.id !== currentUserId) {
+      throw new HttpException(
+        'You are not the author of this article',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    try {
+      await this.articleRepository.deleteArticleBySlug(slug);
+    } catch (error) {
+      console.log(error);
+      throw new HttpException(
+        'Article not deleted',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async updateArticleBySlugAndToken(
+    slug: string,
+    articleUpdateDto: ArticleUpdateDto,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = await this.getCurrentUserId(token);
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
     if (article.author.id !== currentUserId) {
       throw new HttpException(
         'You are not the author of this article',
@@ -113,7 +145,23 @@ export class ArticleService {
       );
     }
 
-    await this.articleRepository.deleteArticleBySlug(slug);
+    try {
+      const articleUpdate = await this.articleRepository.updateArticleBySlug(
+        slug,
+        articleUpdateDto,
+      );
+      const data = this.getArticleWithFavoritesData(
+        articleUpdate,
+        currentUserId,
+      );
+      const buildData = this.buildArticleResponse(data);
+      return buildData;
+    } catch (error) {
+      throw new HttpException(
+        'Article not updated',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   // private async getCountAllArticle(): Promise<number> {
