@@ -243,7 +243,7 @@ export class ArticleService {
     currentUserId: number | null,
   ): ArticleClearDto {
     const favorited = article.favoritedBy.some((user) => {
-      return user.id === currentUserId;
+      return user.userId === currentUserId;
     });
     delete article.favoritedBy;
     return {
