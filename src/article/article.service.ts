@@ -66,10 +66,12 @@ export class ArticleService {
     articleCreateDto: ArticleCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
+    console.log('in create article');
     const slug = this.common.slugGenerator(articleCreateDto.title);
 
     const articleExist = await this.articleRepository.getArticleBySlug(slug);
-    if (articleExist || articleExist.slug === slug) {
+
+    if (articleExist && articleExist.slug === slug) {
       throw new HttpException(
         'Article with this title already exist',
         HttpStatus.BAD_REQUEST,
@@ -77,6 +79,7 @@ export class ArticleService {
     }
 
     const currentUserId = this.user.getUserIdFromToken(token);
+
     const article = await this.articleRepository.createArticle(
       articleCreateDto,
       slug,
@@ -193,6 +196,36 @@ export class ArticleService {
       articleWithFavorites,
       currentUserId,
     );
+    const buildData = this.buildArticleResponse(data);
+    return buildData;
+  }
+
+  async deleteFromFavoritesBySlugAndToken(
+    slug: string,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = this.user.getUserIdFromToken(token);
+
+    const articleExist = await this.articleRepository.getArticleBySlug(slug);
+
+    if (!articleExist) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const articleWithFavorites =
+      await this.articleRepository.deleteFromFavoriteBySlug(
+        slug,
+        currentUserId,
+      );
+
+    const data = this.getArticleWithFavoritesData(
+      articleWithFavorites,
+      currentUserId,
+    );
+
     const buildData = this.buildArticleResponse(data);
     return buildData;
   }

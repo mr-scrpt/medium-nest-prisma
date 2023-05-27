@@ -101,10 +101,19 @@ export class ArticleController {
     @Param('slug') slug: string,
   ): Promise<ArticleBuildResponseDto> {
     return await this.articleService.addToFavoritesBySlugAndToken(slug, auth);
-    // const { id: idUser } = await this.userService.getUserByToken(auth);
-    // const { id: idArticle } = await this.articleService.getArticleBySlug(slug);
-    // const article = await this.articleService.addToFavorite(idUser, idArticle);
+  }
 
-    // return this.articleService.buildArticleResponse(article);
+  @UseGuards(AuthGuard)
+  @Delete(':slug/favorite')
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async deleteFavoriteBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+  ): Promise<ArticleBuildResponseDto> {
+    return await this.articleService.deleteFromFavoritesBySlugAndToken(
+      slug,
+      auth,
+    );
   }
 }

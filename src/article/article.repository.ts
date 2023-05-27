@@ -41,7 +41,7 @@ export class ArticleRepository {
     return articles;
   }
 
-  async getArticleBySlug(slug: string): Promise<ArticleBuildEntity> {
+  async getArticleBySlug(slug: string): Promise<ArticleBuildEntity | null> {
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
@@ -56,10 +56,11 @@ export class ArticleRepository {
       include,
     });
 
-    console.log('article', article);
+    if (!article) {
+      return null;
+    }
 
     const articleSerialize = exclude(article, ['authorId']);
-
     return articleSerialize;
   }
 
@@ -68,6 +69,7 @@ export class ArticleRepository {
     slug: string,
     currentUserId: number,
   ): Promise<ArticleBuildEntity> {
+    console.log('articleCreateDto in repository', articleCreateDto);
     const data = {
       authorId: currentUserId,
       slug,
@@ -129,6 +131,12 @@ export class ArticleRepository {
       favoritedBy: favoritedBaseSelect,
     };
 
+    const currentArticle = await this.prisma.article.findUnique({
+      where: {
+        slug,
+      },
+    });
+
     const include = this.prepareIncludeParams(includeParams);
     const article = await this.prisma.article.update({
       where: { slug },
@@ -139,7 +147,7 @@ export class ArticleRepository {
               where: {
                 userId_articleId: {
                   userId: currentUserId,
-                  articleId: 12,
+                  articleId: currentArticle.id,
                 },
               },
               create: {
@@ -153,64 +161,41 @@ export class ArticleRepository {
     });
 
     return article;
+  }
 
-    //     const article = await this.prisma.article.findUnique({
-    //       where: {
-    //         slug,
-    //       },
-    //       include: {
-    //         favoritedBy: true,
-    //       },
-    //     });
+  async deleteFromFavoriteBySlug(
+    slug: string,
+    currentUserId: number,
+  ): Promise<ArticleBuildEntity> {
+    const includeParams = {
+      author: authorBaseSelect,
+      favoritedBy: favoritedBaseSelect,
+    };
 
-    //     const favoritedByUserIds = article.favoritedBy.map(
-    //       (favorite) => favorite.userId,
-    //     );
+    const currentArticle = await this.prisma.article.findUnique({
+      where: {
+        slug,
+      },
+    });
 
-    //     if (!favoritedByUserIds.includes(currentUserId)) {
-    //       await this.prisma.userToArticle.create({
-    //         data: {
-    //           user: {
-    //             connect: {
-    //               id: currentUserId,
-    //             },
-    //           },
-    //           article: {
-    //             connect: {
-    //               id: article.id,
-    //             },
-    //           },
-    //         },
-    //       });
-    //     }
+    const include = this.prepareIncludeParams(includeParams);
 
-    //     const updatedArticle = await this.prisma.article.findUnique({
-    //       where: {
-    //         id: article.id,
-    //       },
-    //       include,
-    //     });
+    const article = await this.prisma.article.update({
+      where: { slug },
+      data: {
+        favoritedBy: {
+          delete: {
+            userId_articleId: {
+              userId: currentUserId,
+              articleId: currentArticle.id,
+            },
+          },
+        },
+      },
+      include,
+    });
 
-    //     return updatedArticle;
-
-    // const article = await this.prisma.article.update({
-    //   where: {
-    //     slug,
-    //   },
-    //   // update: {
-    //   //   favoritedBy: {
-    //   //     connectOrCreate: {
-    //   //       where: {
-    //   //         userId: currentUserId,
-    //   //       },
-    //   //       create: {
-    //   //         userId: currentUserId,
-    //   //       },
-    //   //     },
-    //   //   },
-    //   // },
-    //   include,
-    // });
+    return article;
   }
 
   async countFeed(): Promise<number> {

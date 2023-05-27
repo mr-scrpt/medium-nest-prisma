@@ -43,9 +43,9 @@ model Article {
 
 model UserToArticle {
   id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId    Int
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   articleId Int
 
   @@unique([userId, articleId])
