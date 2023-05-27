@@ -143,13 +143,6 @@ export class UserService {
     });
   }
 
-  // async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
-  //   if (!tokenString) {
-  //     throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-  //   }
-  //   const id = this.getUserIdFromToken(tokenString);
-  //   return await this.getUserById(id);
-  // }
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
     const id = this.getUserIdFromToken(tokenString);
 
@@ -177,7 +170,6 @@ export class UserService {
       },
     });
 
-    // console.log('User', user);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -252,9 +244,13 @@ export class UserService {
     return this.authService.decodeJWT(token);
   }
 
-  private getUserIdFromToken(tokenString: string): number {
-    const { id } = this.decodeToken(tokenString) as TokenDecode;
-    return +id;
+  getUserIdFromToken(tokenString: string): number {
+    try {
+      const { id } = this.decodeToken(tokenString) as TokenDecode;
+      return +id;
+    } catch (error) {
+      return null;
+    }
   }
 
   buildUserResponse(user: UserEntity): UserBuildResponseDto {

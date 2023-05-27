@@ -90,28 +90,21 @@ export class ArticleController {
       articleUpdatedDto,
       auth,
     );
-    // const { id } = await this.userService.getUserByToken(auth);
-    // const article = await this.articleService.updateArticleBySlug(
-    //   id,
-    //   slug,
-    //   articleUpdatedDto,
-    // );
+  }
+
+  @UseGuards(AuthGuard)
+  @Post(':slug/favorite')
+  @ApiCreatedResponse({ type: ArticleBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async addFavoriteBySlug(
+    @Headers('Authorization') auth: string | undefined,
+    @Param('slug') slug: string,
+  ): Promise<ArticleBuildResponseDto> {
+    return await this.articleService.addFavoriteBySlugAndToken(slug, auth);
+    // const { id: idUser } = await this.userService.getUserByToken(auth);
+    // const { id: idArticle } = await this.articleService.getArticleBySlug(slug);
+    // const article = await this.articleService.addToFavorite(idUser, idArticle);
 
     // return this.articleService.buildArticleResponse(article);
   }
-
-  // @UseGuards(AuthGuard)
-  // @Post(':slug/favorite')
-  // @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  // @UsePipes(new ValidationPipe())
-  // async addFavoriteBySlug(
-  //   @Headers('Authorization') auth: string | undefined,
-  //   @Param('slug') slug: string,
-  // ): Promise<ArticleBuildResponseDto> {
-  //   const { id: idUser } = await this.userService.getUserByToken(auth);
-  //   const { id: idArticle } = await this.articleService.getArticleBySlug(slug);
-  //   const article = await this.articleService.addToFavorite(idUser, idArticle);
-
-  //   return this.articleService.buildArticleResponse(article);
-  // }
 }

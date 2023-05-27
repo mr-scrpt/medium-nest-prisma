@@ -8,8 +8,9 @@ import { Token } from '@app/auth/iterface/auth.interface';
 import { ArticleRepository } from './article.repository';
 import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
-import { ArticleDBDto } from './dto/articleCreateDB.dto';
+// import { ArticleDBDto } from './dto/articleCreateDB.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
+import { ArticleBuildEntity } from './entity/articleBuild.entity';
 
 @Injectable()
 export class ArticleService {
@@ -23,7 +24,7 @@ export class ArticleService {
     queryParams: IArticleQueryParamsRequered,
     token: Token,
   ): Promise<ArticleFeedBuildResponseDto> {
-    const currentUserId = await this.getCurrentUserId(token);
+    const currentUserId = this.user.getUserIdFromToken(token);
 
     const [articles, articleCount] = await Promise.all([
       await this.articleRepository.getArticleAllByParams(
@@ -46,7 +47,7 @@ export class ArticleService {
     slug: string,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
-    const currentUserId = await this.getCurrentUserId(token);
+    const currentUserId = this.user.getUserIdFromToken(token);
     const article = await this.articleRepository.getArticleBySlug(slug);
 
     if (!article) {
@@ -75,7 +76,7 @@ export class ArticleService {
       );
     }
 
-    const currentUserId = await this.getCurrentUserId(token);
+    const currentUserId = this.user.getUserIdFromToken(token);
     const article = await this.articleRepository.createArticle(
       articleCreateDto,
       slug,
@@ -95,7 +96,7 @@ export class ArticleService {
   }
 
   async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
-    const currentUserId = await this.getCurrentUserId(token);
+    const currentUserId = this.user.getUserIdFromToken(token);
     const article = await this.articleRepository.getArticleBySlug(slug);
 
     if (article?.author?.id !== currentUserId) {
@@ -115,7 +116,6 @@ export class ArticleService {
     try {
       await this.articleRepository.deleteArticleBySlug(slug);
     } catch (error) {
-      console.log(error);
       throw new HttpException(
         'Article not deleted',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -128,13 +128,10 @@ export class ArticleService {
     articleUpdateDto: ArticleUpdateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
-    const currentUserId = await this.getCurrentUserId(token);
+    const currentUserId = this.user.getUserIdFromToken(token);
     const slugNew = this.common.slugGenerator(articleUpdateDto.title);
     const articleExist = await this.articleRepository.getArticleBySlug(slug);
 
-    console.log(articleExist);
-    console.log(slugNew);
-    // const articleExist = await this.articleRepository.getArticleBySlug(slug);
     if (!articleExist) {
       throw new HttpException(
         'Article with this slug not found',
@@ -175,42 +172,35 @@ export class ArticleService {
     }
   }
 
-  // private async getCountAllArticle(): Promise<number> {
-  //   return await this.articleRepository.countFeed();
-  // }
+  async addToFavoritesBySlugAndToken(
+    slug: string,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = this.user.getUserIdFromToken(token);
+    const article = await this.articleRepository.getArticleBySlug(slug);
 
-  // private prepareQueryParams(queryParams: IArticleQueryParamsRequered) {
-  //   return this.articleRepository.prepareQueryParams(queryParams);
-  // }
-
-  // private prepareWhereParams(
-  //   queryParams: IArticleQueryParamsRequered,
-  //   currentUserId: number,
-  // ) {
-  //   return this.articleRepository.prepareWhereParams(
-  //     queryParams,
-  //     currentUserId,
-  //   );
-  // }
-
-  // private async getCurrentUserId(token: Token): Promise<number> {
-  //   const { id } = await this.user.getUserByToken(token);
-  //   return id;
-  // }
-
-  private async getCurrentUserId(token: Token): Promise<number | null> {
-    try {
-      const { id } = await this.user.getUserByToken(token);
-      console.log('id', id);
-      return id;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
+
+    const articleWithFavorites = await this.articleRepository.addToFavorites(
+      article,
+      currentUserId,
+    );
+
+    const data = this.getArticleWithFavoritesData(
+      articleWithFavorites,
+      currentUserId,
+    );
+    const buildData = this.buildArticleResponse(data);
+    return buildData;
   }
 
   private async getArticlesFeedWithFavoritesData(
-    articles: ArticleDBDto[],
+    articles: ArticleBuildEntity[],
     currentUserId: number | null,
   ): Promise<ArticleClearDto[]> {
     return articles.map((article) => {
@@ -218,7 +208,7 @@ export class ArticleService {
     });
   }
   private getArticleWithFavoritesData(
-    article: ArticleDBDto,
+    article: ArticleBuildEntity,
     currentUserId: number | null,
   ): ArticleClearDto {
     const favorited = article.favoritedBy.some((user) => {

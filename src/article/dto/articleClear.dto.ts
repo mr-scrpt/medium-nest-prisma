@@ -79,6 +79,6 @@ export class ArticleClearDto {
   @IsNumber()
   favoritesCount: number;
 
-  @ApiProperty()
-  author: ArticleUserDto;
+  // @ApiProperty()
+  // author: ArticleUserDto;
 }

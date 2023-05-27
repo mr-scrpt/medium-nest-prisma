@@ -7,10 +7,12 @@ import {
   favoritedBaseSelect,
 } from '@app/article/article.select';
 import { IArticleDBDto } from './interface/db.interface';
-import { Prisma } from '@prisma/client';
+import { Article, Prisma } from '@prisma/client';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleDBDto } from './dto/articleCreateDB.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
+import { ArticleBuildEntity } from './entity/articleBuild.entity';
+import { exclude } from './article.helper';
 
 @Injectable()
 export class ArticleRepository {
@@ -19,7 +21,7 @@ export class ArticleRepository {
   async getArticleAllByParams(
     queryParams: IArticleQueryParamsRequered,
     currentUserId: number,
-  ): Promise<ArticleDBDto[]> {
+  ): Promise<ArticleBuildEntity[]> {
     const params = this.prepareQueryParams(queryParams);
     const where = this.prepareWhereParams(queryParams, currentUserId);
     const includeParams = {
@@ -28,7 +30,7 @@ export class ArticleRepository {
     };
 
     const include = this.prepareIncludeParams(includeParams);
-    const articles: unknown = await this.prisma.article.findMany({
+    const articles = await this.prisma.article.findMany({
       ...params,
       where,
       include,
@@ -36,31 +38,34 @@ export class ArticleRepository {
 
     console.log('articles', articles);
 
-    return articles as ArticleDBDto[];
+    return articles;
   }
 
-  async getArticleBySlug(slug: string): Promise<ArticleDBDto> {
+  async getArticleBySlug(slug: string): Promise<ArticleBuildEntity> {
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
     };
 
     const include = this.prepareIncludeParams(includeParams);
-    const article: unknown = await this.prisma.article.findUnique({
+    const article = await this.prisma.article.findUnique({
       where: {
         slug,
       },
 
       include,
     });
-    return article as ArticleDBDto;
+
+    const articleSerialize = exclude(article, ['authorId']);
+
+    return articleSerialize;
   }
 
   async createArticle(
     articleCreateDto: ArticleCreateDto,
     slug: string,
     currentUserId: number,
-  ): Promise<ArticleDBDto> {
+  ): Promise<ArticleBuildEntity> {
     const data = {
       authorId: currentUserId,
       slug,
@@ -72,11 +77,11 @@ export class ArticleRepository {
     };
     const include = this.prepareIncludeParams(includeParams);
 
-    const articleCreated: unknown = await this.prisma.article.create({
+    const articleCreated = await this.prisma.article.create({
       data,
       include,
     });
-    return articleCreated as ArticleDBDto;
+    return articleCreated;
   }
 
   async deleteArticleBySlug(slug: string): Promise<void> {
@@ -91,7 +96,7 @@ export class ArticleRepository {
     slug: string,
     slugNew: string,
     articleUpdateDto: ArticleUpdateDto,
-  ): Promise<ArticleDBDto> {
+  ): Promise<ArticleBuildEntity> {
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
@@ -103,14 +108,14 @@ export class ArticleRepository {
     };
 
     const include = this.prepareIncludeParams(includeParams);
-    const articleUpdated: unknown = await this.prisma.article.update({
+    const articleUpdated = await this.prisma.article.update({
       where: {
         slug,
       },
       data,
       include,
     });
-    return articleUpdated as ArticleDBDto;
+    return articleUpdated;
   }
 
   async countFeed(): Promise<number> {
