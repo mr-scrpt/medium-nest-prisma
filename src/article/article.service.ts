@@ -177,19 +177,17 @@ export class ArticleService {
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
-    const article = await this.articleRepository.getArticleBySlug(slug);
 
-    if (!article) {
+    const articleExist = await this.articleRepository.getArticleBySlug(slug);
+    if (!articleExist) {
       throw new HttpException(
         'Article with this slug not found',
         HttpStatus.NOT_FOUND,
       );
     }
 
-    const articleWithFavorites = await this.articleRepository.addToFavorites(
-      article,
-      currentUserId,
-    );
+    const articleWithFavorites =
+      await this.articleRepository.addToFavoriteBySlug(slug, currentUserId);
 
     const data = this.getArticleWithFavoritesData(
       articleWithFavorites,

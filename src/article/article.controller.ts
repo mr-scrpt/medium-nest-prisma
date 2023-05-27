@@ -100,7 +100,7 @@ export class ArticleController {
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
   ): Promise<ArticleBuildResponseDto> {
-    return await this.articleService.addFavoriteBySlugAndToken(slug, auth);
+    return await this.articleService.addToFavoritesBySlugAndToken(slug, auth);
     // const { id: idUser } = await this.userService.getUserByToken(auth);
     // const { id: idArticle } = await this.articleService.getArticleBySlug(slug);
     // const article = await this.articleService.addToFavorite(idUser, idArticle);
