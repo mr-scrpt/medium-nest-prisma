@@ -35,7 +35,7 @@ export class ArticleController {
   async getArticleAll(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
-  ): Promise<any> {
+  ): Promise<ArticleFeedBuildResponseDto> {
     const params = parseQueryParams(query);
     return await this.articleService.getArticleAllByParamsAndToken(
       params,
