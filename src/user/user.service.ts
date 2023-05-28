@@ -42,8 +42,8 @@ export class UserService {
     id: number,
     updateUserDto: UserUpdateDto,
   ): Promise<UserEntity> {
-    const IsNotEmptyObject = this.common.IsNotEmptyObject(updateUserDto);
-    if (!IsNotEmptyObject) {
+    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
+    if (!isNotEmptyObject) {
       throw new HttpException(
         'At least one field must be filled',
         HttpStatus.UNPROCESSABLE_ENTITY,

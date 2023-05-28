@@ -28,15 +28,15 @@ export const parseQueryParams = (
   return parsedParams;
 };
 
-export const exclude = <T, Key extends keyof T>(
-  entity: T,
-  keys: Key[],
-): Omit<T, Key> => {
-  for (const key of keys) {
-    delete entity[key];
-  }
-  return entity;
-};
+// export const exclude = <T, Key extends keyof T>(
+//   entity: T,
+//   keys: Key[],
+// ): Omit<T, Key> => {
+//   for (const key of keys) {
+//     delete entity[key];
+//   }
+//   return entity;
+// };
 
 // export const parseWhereParams = (
 //   query: IArtilceQueryParamsOptional,

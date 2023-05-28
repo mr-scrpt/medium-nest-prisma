@@ -14,7 +14,14 @@ export class CommonService {
     return slugify(str, slugifyConfig);
   }
 
-  IsNotEmptyObject(obj: object): boolean {
+  isNotEmptyObject(obj: object): boolean {
     return obj && Object.keys(obj).length !== 0;
   }
+
+  exclude = <T, Key extends keyof T>(entity: T, keys: Key[]): Omit<T, Key> => {
+    for (const key of keys) {
+      delete entity[key];
+    }
+    return entity;
+  };
 }

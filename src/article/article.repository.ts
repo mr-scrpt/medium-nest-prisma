@@ -1,4 +1,3 @@
-// article.repository.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IArticleQueryParamsRequered } from '@app/article/interface/query.interface';
@@ -8,14 +7,16 @@ import {
 } from '@app/article/article.select';
 import { Prisma } from '@prisma/client';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
-// import { ArticleDBDto } from './dto/articleCreateDB.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticleBuildEntity } from './entity/articleBuild.entity';
-import { exclude } from './article.helper';
+import { CommonService } from '@app/common/common.service';
 
 @Injectable()
 export class ArticleRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly common: CommonService,
+  ) {}
 
   async getArticleAllByParams(
     queryParams: IArticleQueryParamsRequered,
@@ -59,7 +60,7 @@ export class ArticleRepository {
       return null;
     }
 
-    const articleSerialize = exclude(article, ['authorId']);
+    const articleSerialize = this.common.exclude(article, ['authorId']);
     return articleSerialize;
   }
 
