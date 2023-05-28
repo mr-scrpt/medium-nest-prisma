@@ -27,7 +27,7 @@ export class UserUpdateDto {
   @IsString()
   @MinLength(8)
   @IsOptional()
-  readonly password?: string;
+  password?: string;
 
   @ApiProperty({
     example: 'passwordNew',
@@ -37,7 +37,7 @@ export class UserUpdateDto {
   @IsString()
   @MinLength(8)
   @IsOptional()
-  readonly passwordOld?: string;
+  passwordOld?: string;
 
   @ApiProperty({
     example: 'text about me',

@@ -69,7 +69,6 @@ export class ArticleRepository {
     slug: string,
     currentUserId: number,
   ): Promise<ArticleBuildEntity> {
-    console.log('articleCreateDto in repository', articleCreateDto);
     const data = {
       authorId: currentUserId,
       slug,

@@ -10,103 +10,65 @@ import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 import { CommonService } from '@app/common/common.service';
+import { UserRepository } from './user.repository';
 
-@Injectable({})
+@Injectable()
 export class UserService {
   constructor(
-    private prisma: PrismaService,
     private authService: AuthService,
     private common: CommonService,
+    private userRepository: UserRepository,
   ) {}
-  async createUsers(userCreateDto: UserCreateDto): Promise<UserEntity> {
+  async createUsers(
+    userCreateDto: UserCreateDto,
+  ): Promise<UserBuildResponseDto> {
     const { username, email, password } = userCreateDto;
 
-    const userExists = await this.checkUserExists(email, username);
-    if (userExists) {
-      throw new HttpException(
-        'Email or username are taken',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    this.checkEmailAndName(email, username);
+
     const passwordHashed = await this.authService.hashPassword(password);
 
-    return await this.prisma.user.create({
-      data: {
-        ...userCreateDto,
-        password: passwordHashed,
-      },
-    });
+    const data = {
+      ...userCreateDto,
+      password: passwordHashed,
+    };
+
+    const user = await this.userRepository.createUser(data);
+
+    return this.buildUserResponse(user);
   }
 
   async updateUser(
     id: number,
     updateUserDto: UserUpdateDto,
-  ): Promise<UserEntity> {
-    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
-    if (!isNotEmptyObject) {
-      throw new HttpException(
-        'At least one field must be filled',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-    const { password, passwordOld, email, username } = updateUserDto;
+  ): Promise<UserBuildResponseDto> {
+    const { password } = await this.checkAndGetUserById(id);
 
-    if ((password && !passwordOld) || (!password && passwordOld)) {
-      throw new HttpException(
-        'Password and passwordOld are required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    this.validateUpdateUserDto(updateUserDto);
+    const {
+      password: passwordNew,
+      passwordOld,
+      email,
+      username,
+    } = updateUserDto;
 
-    const userExists = await this.checkUserExists(email, username);
-    if (userExists) {
-      throw new HttpException(
-        'Email or username are taken',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    await this.checkEmailAndName(email, username);
 
-    const dataUpdate = { ...updateUserDto };
+    await this.validatePassword(passwordNew, passwordOld, password);
 
-    for (const key in dataUpdate) {
-      if (!dataUpdate[key]) {
-        delete dataUpdate[key];
-      }
-    }
+    const dataUpdate = this.generateStructureUpdateUser(updateUserDto);
 
-    if (password && passwordOld) {
-      const user = await this.getUserById(id);
-      if (!user) {
-        throw new HttpException(
-          'User not found',
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
-      const passwordValid = await this.authService.validatePassword(
-        passwordOld,
-        user.password,
-      );
+    const userWithHashedPassword = await this.generateUserWithHashedPassword(
+      dataUpdate,
+      passwordNew,
+    );
 
-      if (!passwordValid) {
-        throw new HttpException(
-          'Password is invalid',
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
-      const passwordHashed = await this.authService.hashPassword(password);
-      dataUpdate.password = passwordHashed;
-      delete dataUpdate.passwordOld;
-    }
+    const userUpdate = await this.userRepository.updateUser(
+      id,
+      userWithHashedPassword,
+    );
 
-    return await this.prisma.user.update({
-      where: {
-        id,
-      },
-      data: {
-        ...dataUpdate,
-      },
-    });
-    // return '' as any;
+    return this.buildUserResponse(userUpdate);
   }
 
   async login(userLoginDto: UserLoginDto): Promise<UserEntity> {
@@ -219,18 +181,69 @@ export class UserService {
 
     return !!userExists;
   }
+  private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
+    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
+    if (!isNotEmptyObject) {
+      throw new HttpException(
+        'At least one field must be filled',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
 
-  private async checkUserExists(
+    const { password, passwordOld } = updateUserDto;
+    if ((password && !passwordOld) || (!password && passwordOld)) {
+      throw new HttpException(
+        'Password and passwordOld are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private async validatePassword(
+    passwordNew: string,
+    passwordOld: string,
+    password: string,
+  ): Promise<void> {
+    if (passwordNew && passwordOld) {
+      const passwordValid = await this.authService.validatePassword(
+        passwordOld,
+        password,
+      );
+
+      if (!passwordValid) {
+        throw new HttpException(
+          'Password is invalid',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+    }
+  }
+
+  private async checkEmailAndName(
     email: string,
     username: string,
-  ): Promise<boolean> {
-    const userExists = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }],
-      },
-    });
+  ): Promise<void> {
+    const userExists = await this.userRepository.checkEmailAndName(
+      email,
+      username,
+    );
+    if (userExists) {
+      throw new HttpException(
+        'Email or username are taken',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
 
-    return !!userExists;
+  private async checkAndGetUserById(id: number): Promise<UserEntity> {
+    const userExists = await this.userRepository.getUserById(id);
+    if (!userExists) {
+      throw new HttpException(
+        'User not found',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return userExists;
   }
 
   private getToken(tokenString: string): string {
@@ -242,6 +255,29 @@ export class UserService {
     const token = this.getToken(tokenString);
 
     return this.authService.decodeJWT(token);
+  }
+
+  private generateStructureUpdateUser(
+    userUpdateDto: UserUpdateDto,
+  ): UserUpdateDto {
+    const dataUpdate = { ...userUpdateDto };
+    for (const key in dataUpdate) {
+      if (!dataUpdate[key]) {
+        delete dataUpdate[key];
+      }
+    }
+    return dataUpdate;
+  }
+
+  private async generateUserWithHashedPassword(
+    userUpdateDto: UserUpdateDto,
+    passwordNew: string,
+  ): Promise<UserUpdateDto> {
+    const passwordHashed = await this.authService.hashPassword(passwordNew);
+    userUpdateDto.password = passwordHashed;
+    delete userUpdateDto.passwordOld;
+
+    return userUpdateDto;
   }
 
   getUserIdFromToken(tokenString: string): number {
