@@ -19,10 +19,11 @@ import { ApiBody, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
 import { ArticleUpdateDto } from '@app/article/dto/articleUpdate.dto';
 import { ArticleRequestUpdateDto } from '@app/article/dto/swagger/articleRequestUpdate.dto';
-import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
 import { parseQueryParams } from './article.helper';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { IArtilceQueryParamsOptional } from './interface/query.interface';
+import { ArticleRequestCreateDto } from './dto/swagger/articleRequestCreate.dto';
+import { ArticleBuildResponseFeedDto } from './dto/articleBuildResponseFeed.dto';
 
 @ApiTags('article')
 @Controller('article')
@@ -30,12 +31,12 @@ export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
   @Get()
-  @ApiCreatedResponse({ type: ArticleFeedBuildResponseDto })
+  @ApiCreatedResponse({ type: ArticleBuildResponseFeedDto })
   @UsePipes(new ValidationPipe())
   async getArticleAll(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
-  ): Promise<ArticleFeedBuildResponseDto> {
+  ): Promise<ArticleBuildResponseFeedDto> {
     const params = parseQueryParams(query);
     return await this.articleService.getArticleAllByParamsAndToken(
       params,
@@ -45,7 +46,7 @@ export class ArticleController {
 
   @UseGuards(AuthGuard)
   @Post()
-  @ApiBody({ type: ArticleCreateDto })
+  @ApiBody({ type: ArticleRequestCreateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
   @UsePipes(new ValidationPipe())
   async createArticle(

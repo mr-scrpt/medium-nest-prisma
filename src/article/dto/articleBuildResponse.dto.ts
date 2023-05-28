@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
-import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
+import { ArticleResponseDto } from './articleResponse.dto';
 
 export class ArticleBuildResponseDto {
-  @ApiProperty({ type: ArticleClearDto })
+  @ApiProperty({ type: ArticleResponseDto })
   @ValidateNested()
-  article: ArticleClearDto;
+  article: ArticleResponseDto;
 }

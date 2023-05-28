@@ -1,5 +1,3 @@
-import { UserClearDto } from '@app/user/dto/userClear.dto';
-// import { UserEntity } from '@app/user/entity/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
@@ -8,9 +6,9 @@ import {
   IsNumber,
   MinLength,
 } from 'class-validator';
-import { ArticleUserDto } from './articleUserDto';
+// import { ArticleUserDto } from './articleUserDto';
 
-export class ArticleClearDto {
+export class ArticleDBDto {
   @ApiProperty({
     example: 1,
     description: 'Id of the article',
@@ -67,12 +65,6 @@ export class ArticleClearDto {
   updatedAt: Date;
 
   @ApiProperty({
-    example: true,
-    description: 'If the user is following the author of the article',
-  })
-  favorited: boolean;
-
-  @ApiProperty({
     example: 0,
     description: 'Number of favorites for the article',
   })
@@ -81,4 +73,7 @@ export class ArticleClearDto {
 
   // @ApiProperty()
   // author: ArticleUserDto;
+
+  // @ApiProperty()
+  // favoritedBy: ArticleUserDto[];
 }

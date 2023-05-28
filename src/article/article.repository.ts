@@ -6,10 +6,9 @@ import {
   authorBaseSelect,
   favoritedBaseSelect,
 } from '@app/article/article.select';
-import { IArticleDBDto } from './interface/db.interface';
-import { Article, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
-import { ArticleDBDto } from './dto/articleCreateDB.dto';
+// import { ArticleDBDto } from './dto/articleCreateDB.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticleBuildEntity } from './entity/articleBuild.entity';
 import { exclude } from './article.helper';

@@ -4,10 +4,6 @@ import { UserCreateDto } from './userCreate.dto';
 
 export class UserClearDto extends OmitType(UserCreateDto, ['password']) {
   @ApiProperty({
-    example: 'token string',
-    description: 'The token of the User',
-  })
-  @ApiProperty({
     example: 'biography',
     description: 'The biography of the User',
   })

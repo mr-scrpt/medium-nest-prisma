@@ -26,26 +26,24 @@ interface IQueryParamsBase {
   favorited?: string;
 }
 
-interface IPagintionParamsBase
-  extends Omit<IQueryParamsBase, 'tag' | 'author'> {}
+// interface IPagintionParamsBase
+//   extends Omit<IQueryParamsBase, 'tag' | 'author'> {}
 
-interface IWhereParamsBase {
-  tagList?: {
-    has: string;
-  };
-  author?: {
-    username: string;
-  };
-}
+// interface IWhereParamsBase {
+//   tagList?: {
+//     has: string;
+//   };
+//   author?: {
+//     username: string;
+//   };
+// }
 
 export type IArtilceQueryParamsOptional = Nullable<IQueryParamsBase>;
 
 export type IArticleQueryParamsRequered = Required<IQueryParamsBase>;
 
-export type IArticlePagintionParamsRequered = Required<IPagintionParamsBase>;
+// export type IArticlePagintionParamsRequered = Required<IPagintionParamsBase>;
 
-export type IArticlePagintionParamsOptional = Nullable<IPagintionParamsBase>;
+// export type IArticlePagintionParamsOptional = Nullable<IPagintionParamsBase>;
 
-export type IArtilceWhereParamsOptional = Nullable<IWhereParamsBase>;
-
-export type IArticleWhereParamsRequered = Required<IWhereParamsBase>;
+// export type IArtilceWhereParamsOptional = Nullable<IWhereParamsBase>;

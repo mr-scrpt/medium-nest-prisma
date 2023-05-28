@@ -1,16 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
-import { ArticleClearDto } from '@app/article/dto/articleClear.dto';
 import { CommonService } from '@app/common/common.service';
 import { UserService } from '@app/user/user.service';
 import { IArticleQueryParamsRequered } from './interface/query.interface';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { ArticleRepository } from './article.repository';
-import { ArticleFeedBuildResponseDto } from './dto/articleFeedBuildResponse.dto';
+import { ArticleBuildResponseFeedDto } from './dto/articleBuildResponseFeed.dto';
 import { ArticleCreateDto } from './dto/articleCreate.dto';
-// import { ArticleDBDto } from './dto/articleCreateDB.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticleBuildEntity } from './entity/articleBuild.entity';
+import { ArticleResponseDto } from './dto/articleResponse.dto';
 
 @Injectable()
 export class ArticleService {
@@ -23,7 +22,7 @@ export class ArticleService {
   async getArticleAllByParamsAndToken(
     queryParams: IArticleQueryParamsRequered,
     token: Token,
-  ): Promise<ArticleFeedBuildResponseDto> {
+  ): Promise<ArticleBuildResponseFeedDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
 
     const [articles, articleCount] = await Promise.all([
@@ -59,7 +58,7 @@ export class ArticleService {
 
     const data = this.getArticleWithFavoritesData(article, currentUserId);
     const buildData = this.buildArticleResponse(data);
-    return buildData as ArticleBuildResponseDto;
+    return buildData;
   }
 
   async createArticle(
@@ -233,7 +232,7 @@ export class ArticleService {
   private async getArticlesFeedWithFavoritesData(
     articles: ArticleBuildEntity[],
     currentUserId: number | null,
-  ): Promise<ArticleClearDto[]> {
+  ): Promise<ArticleResponseDto[]> {
     return articles.map((article) => {
       return this.getArticleWithFavoritesData(article, currentUserId);
     });
@@ -241,7 +240,7 @@ export class ArticleService {
   private getArticleWithFavoritesData(
     article: ArticleBuildEntity,
     currentUserId: number | null,
-  ): ArticleClearDto {
+  ): ArticleResponseDto {
     const favorited = article.favoritedBy.some((user) => {
       return user.userId === currentUserId;
     });
@@ -253,15 +252,15 @@ export class ArticleService {
   }
 
   private buildArticleResponse(
-    article: ArticleClearDto,
+    article: ArticleResponseDto,
   ): ArticleBuildResponseDto {
     return { article };
   }
 
   private buildArticlesFeedResponse(
-    articles: ArticleClearDto[],
+    articles: ArticleResponseDto[],
     articlesCount: number,
-  ): ArticleFeedBuildResponseDto {
+  ): ArticleBuildResponseFeedDto {
     return { articles, articlesCount };
   }
 }

@@ -1,5 +1,6 @@
-import { Article, User, UserToArticle } from '@prisma/client';
+import { Article, UserToArticle } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserAuthorEntity } from '@app/user/entity/userAuthor.entity';
 
 export class ArticleBuildEntity implements Omit<Article, 'authorId'> {
   @ApiProperty({ type: 'integer' })
@@ -33,5 +34,5 @@ export class ArticleBuildEntity implements Omit<Article, 'authorId'> {
   favoritedBy?: UserToArticle[];
 
   @ApiProperty({ type: 'object' })
-  author?: User;
+  author?: UserAuthorEntity;
 }
