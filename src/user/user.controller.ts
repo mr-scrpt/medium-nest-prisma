@@ -50,25 +50,23 @@ export class UserController {
   async login(
     @Body('user') userLoginDto: UserLoginDto,
   ): Promise<UserBuildResponseDto> {
-    const user = await this.userService.login(userLoginDto);
-    return this.userService.buildUserResponse(user);
+    return await this.userService.login(userLoginDto);
   }
 
-  // @UseGuards(AuthGuard)
-  // @Get('user')
-  // @ApiHeader({
-  //   name: 'Authorization',
-  //   description: 'Authorization: Token jwt.token.here',
-  // })
-  // @ApiBody({ type: UserRequestLoginDto })
-  // @ApiCreatedResponse({ type: UserBuildResponseDto })
-  // @UsePipes(new ValidationPipe())
-  // async getUser(
-  //   @Headers('Authorization') auth: string | undefined,
-  // ): Promise<UserBuildResponseDto> {
-  //   const user = await this.userService.getUserByToken(auth);
-  //   return this.userService.buildUserResponse(user);
-  // }
+  @UseGuards(AuthGuard)
+  @Get('user')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Authorization: Token jwt.token.here',
+  })
+  @ApiBody({ type: UserRequestLoginDto })
+  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @UsePipes(new ValidationPipe())
+  async getUserAuth(
+    @Headers('Authorization') auth: string | undefined,
+  ): Promise<UserBuildResponseDto> {
+    return await this.userService.getUserCurrent(auth);
+  }
 
   // @Get('user/:id')
   // @ApiCreatedResponse({ type: UserBuildResponseDto })

@@ -14,13 +14,24 @@ export class AuthService {
   };
   private readonly SCRYPT_PREFIX = '$scrypt$N=32768,r=8,p=1,maxmem=67108864$';
 
-  serializeHash = (hash: Buffer, salt: Buffer) => {
+  getToken(tokenString: string): string {
+    const token = tokenString.split(' ')[1];
+    return token;
+  }
+
+  decodeToken(tokenString: string): string | JwtPayload {
+    const token = this.getToken(tokenString);
+
+    return this.decodeJWT(token);
+  }
+
+  private serializeHash = (hash: Buffer, salt: Buffer) => {
     const saltString = salt.toString('base64').split('=')[0];
     const hashString = hash.toString('base64').split('=')[0];
     return `${this.SCRYPT_PREFIX}${saltString}$${hashString}`;
   };
 
-  parseOptions = (options: string) => {
+  private parseOptions = (options: string) => {
     const values = [];
     const items = options.split(',');
     for (const item of items) {
@@ -30,7 +41,7 @@ export class AuthService {
     return Object.fromEntries(values);
   };
 
-  deserializeHash = (phcString: string) => {
+  private deserializeHash = (phcString: string) => {
     const [, name, options, salt64, hash64] = phcString.split('$');
     if (name !== 'scrypt') {
       throw new Error('Node.js crypto module only supports scrypt');
