@@ -19,7 +19,7 @@ export class UserService {
     private userRepository: UserRepository,
     private prisma: PrismaService,
   ) {}
-  async createUsers(
+  async createUser(
     userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
     const { username, email, password } = userCreateDto;
@@ -92,7 +92,7 @@ export class UserService {
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
     const id = this.getUserIdFromToken(tokenString);
 
-    return await this.getUserById(id);
+    return await this.checkAndGetUserById(id);
   }
 
   getUserIdFromToken(tokenString: string): number {
@@ -140,24 +140,13 @@ export class UserService {
     return userExists;
   }
 
-  private async getUserById(id: number): Promise<UserEntity> {
+  private async checkAndGetUserById(id: number): Promise<UserEntity> {
     const user = await this.userRepository.getUserById(id);
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return user;
-  }
-
-  /***/
-  private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
-    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
-    if (!isNotEmptyObject) {
-      throw new HttpException(
-        'At least one field must be filled',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
   }
 
   private async checkValidatePassword(
@@ -177,18 +166,27 @@ export class UserService {
     }
   }
 
+  private checkPasswordData(
+    passworLeft: string,
+    passwordRight: string,
+  ): boolean {
+    if ((passworLeft && !passwordRight) || (!passworLeft && passwordRight)) {
+      throw new HttpException(
+        'Password and passwordOld are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return true;
+  }
+
   /***/
   private async validateAndGenerateHashedPassword(
     passwordNew: string,
     passwordOld: string,
     password: string,
   ): Promise<string> {
-    if ((passwordNew && !passwordOld) || (!passwordNew && passwordOld)) {
-      throw new HttpException(
-        'Password and passwordOld are required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    this.checkPasswordData(passwordNew, passwordOld);
 
     if (!passwordNew && !passwordOld) {
       return '';
@@ -217,6 +215,17 @@ export class UserService {
   }
 
   /***/
+  private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
+    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
+    if (!isNotEmptyObject) {
+      throw new HttpException(
+        'At least one field must be filled',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  /***/
   private generateStructureUpdateUser(
     userUpdateDto: UserUpdateDto,
   ): UserUpdateDto {
@@ -239,18 +248,4 @@ export class UserService {
       },
     };
   }
-
-  // buildResponseUserToken(User: UserEntity): UserBuildResponseDto {
-
-  // buildUserClearResponse(user: UserEntity): UserBuildClearResponseDto {
-  //   const { username, email, bio, image } = user;
-  //   return {
-  //     user: {
-  //       username,
-  //       email,
-  //       bio,
-  //       image,
-  //     },
-  //   };
-  // }
 }

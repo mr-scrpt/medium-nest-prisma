@@ -5,7 +5,6 @@ import {
   Post,
   Put,
   Body,
-  Param,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -25,7 +24,6 @@ import { UserRequestLoginDto } from '@app/user/dto/swagger/userRequestLogin.dto'
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
-import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 import { Token } from '@app/auth/iterface/auth.interface';
 
 @ApiTags('user')
@@ -40,7 +38,7 @@ export class UserController {
   async createUsers(
     @Body('user') userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
-    return await this.userService.createUsers(userCreateDto);
+    return await this.userService.createUser(userCreateDto);
   }
 
   @Post('users/login')
@@ -62,20 +60,11 @@ export class UserController {
   @ApiBody({ type: UserRequestLoginDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
   @UsePipes(new ValidationPipe())
-  async getUserAuth(
+  async getUserCurrent(
     @Headers('Authorization') auth: string | undefined,
   ): Promise<UserBuildResponseDto> {
     return await this.userService.getUserCurrent(auth);
   }
-
-  // @Get('user/:id')
-  // @ApiCreatedResponse({ type: UserBuildResponseDto })
-  // async getUserById(
-  //   @Param('id') id: number,
-  // ): Promise<UserBuildClearResponseDto> {
-  //   const user = await this.userService.getUserById(+id);
-  //   return this.userService.buildUserClearResponse(user);
-  // }
 
   @UseGuards(AuthGuard)
   @Put('user')
