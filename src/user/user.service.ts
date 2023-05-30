@@ -1,5 +1,4 @@
 import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
-import { PrismaService } from '@app/prisma/prisma.service';
 import { AuthService } from '@app/auth/auth.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserEntity } from '@app/user/entity/user.entity';
@@ -11,6 +10,8 @@ import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
 import { CommonService } from '@app/common/common.service';
 import { UserRepository } from './user.repository';
+import { Token } from '@app/auth/iterface/auth.interface';
+import { PrismaService } from '@app/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
@@ -18,13 +19,14 @@ export class UserService {
     private authService: AuthService,
     private common: CommonService,
     private userRepository: UserRepository,
+    private prisma: PrismaService,
   ) {}
   async createUsers(
     userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
     const { username, email, password } = userCreateDto;
 
-    this.checkEmailAndName(email, username);
+    this.checkUniqueEmailAndName(email, username);
 
     const passwordHashed = await this.authService.hashPassword(password);
 
@@ -39,12 +41,13 @@ export class UserService {
   }
 
   async updateUser(
-    id: number,
     updateUserDto: UserUpdateDto,
+    token: Token,
   ): Promise<UserBuildResponseDto> {
-    const { password } = await this.checkAndGetUserById(id);
+    const { id, password } = await this.checkAndGetUserByToken(token);
 
     this.validateUpdateUserDto(updateUserDto);
+
     const {
       password: passwordNew,
       passwordOld,
@@ -52,23 +55,24 @@ export class UserService {
       username,
     } = updateUserDto;
 
-    await this.checkEmailAndName(email, username);
+    await this.checkUniqueEmailAndName(email, username);
 
-    await this.validatePassword(passwordNew, passwordOld, password);
-
-    const dataUpdate = this.generateStructureUpdateUser(updateUserDto);
-
-    const userWithHashedPassword = await this.generateUserWithHashedPassword(
-      dataUpdate,
+    const hashPassword = await this.validateAndGenerateHashedPassword(
       passwordNew,
+      passwordOld,
+      password,
     );
 
-    const userUpdate = await this.userRepository.updateUser(
+    delete updateUserDto.passwordOld;
+    updateUserDto.password = hashPassword;
+    const userUpdate = this.generateStructureUpdateUser(updateUserDto);
+
+    const userUpdateResponse = await this.userRepository.updateUser(
       id,
-      userWithHashedPassword,
+      userUpdate,
     );
 
-    return this.buildUserResponse(userUpdate);
+    return this.buildUserResponse(userUpdateResponse);
   }
 
   async login(userLoginDto: UserLoginDto): Promise<UserEntity> {
@@ -111,26 +115,24 @@ export class UserService {
     return await this.getUserById(id);
   }
 
-  async checkAndGetUserByToken(
+  private async checkAndGetUserByToken(
     tokenString: string | undefined,
   ): Promise<UserEntity> {
-    try {
-      const id = this.getUserIdFromToken(tokenString);
-      return await this.getUserById(id);
-    } catch (error) {
-      return null;
+    if (!tokenString) {
+      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
+    const userExists = await this.getUserByToken(tokenString);
+    if (!userExists) {
+      throw new HttpException(
+        'User not found',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return userExists;
   }
 
   async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        favorites: true,
-      },
-    });
+    const user = await this.userRepository.getUserById(id);
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -138,49 +140,50 @@ export class UserService {
     return user;
   }
 
-  async addFavoriteById(idUser: number, idArticle: number): Promise<any> {
-    const article: any = await this.prisma.article.update({
-      where: { id: idArticle },
-      data: {
-        favoritedBy: {
-          connect: { id: idUser },
-        },
-      },
-      include: {
-        author: {
-          select: {
-            email: true,
-            username: true,
-            bio: true,
-            image: true,
-          },
-        },
-        favoritedBy: { select: { id: true } },
-      },
-    });
-    console.dir({ article });
-  }
+  // async addFavoriteById(idUser: number, idArticle: number): Promise<any> {
+  //   const article: any = await this.prisma.article.update({
+  //     where: { id: idArticle },
+  //     data: {
+  //       favoritedBy: {
+  //         connect: { id: idUser },
+  //       },
+  //     },
+  //     include: {
+  //       author: {
+  //         select: {
+  //           email: true,
+  //           username: true,
+  //           bio: true,
+  //           image: true,
+  //         },
+  //       },
+  //       favoritedBy: { select: { id: true } },
+  //     },
+  //   });
+  //   console.dir({ article });
+  // }
 
-  async getUserIfExistsByToken(
-    tokenString: string | undefined,
-  ): Promise<UserEntity | null> {
-    if (!tokenString) {
-      return null;
-    }
-    const id = this.getUserIdFromToken(tokenString);
-    const user = await this.getUserById(id);
-    return user;
-  }
+  // async getUserIfExistsByToken(
+  //   tokenString: string | undefined,
+  // ): Promise<UserEntity | null> {
+  //   if (!tokenString) {
+  //     return null;
+  //   }
+  //   const id = this.getUserIdFromToken(tokenString);
+  //   const user = await this.getUserById(id);
+  //   return user;
+  // }
 
-  async checkUserExistsById(id: number): Promise<boolean> {
-    const userExists = await this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
+  // async checkUserExistsById(id: number): Promise<boolean> {
+  //   const userExists = await this.prisma.user.findUnique({
+  //     where: {
+  //       id,
+  //     },
+  //   });
 
-    return !!userExists;
-  }
+  //   return !!userExists;
+  // }
+
   private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
     const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
     if (!isNotEmptyObject) {
@@ -189,37 +192,60 @@ export class UserService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
+  }
 
-    const { password, passwordOld } = updateUserDto;
-    if ((password && !passwordOld) || (!password && passwordOld)) {
+  private async validateAndGenerateHashedPassword(
+    passwordNew: string,
+    passwordOld: string,
+    password: string,
+  ): Promise<string> {
+    if ((passwordNew && !passwordOld) || (!passwordNew && passwordOld)) {
       throw new HttpException(
         'Password and passwordOld are required',
         HttpStatus.BAD_REQUEST,
       );
     }
-  }
 
-  private async validatePassword(
-    passwordNew: string,
-    passwordOld: string,
-    password: string,
-  ): Promise<void> {
-    if (passwordNew && passwordOld) {
-      const passwordValid = await this.authService.validatePassword(
-        passwordOld,
-        password,
-      );
-
-      if (!passwordValid) {
-        throw new HttpException(
-          'Password is invalid',
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
+    if (!passwordNew && !passwordOld) {
+      return '';
     }
+
+    const isValid = await this.authService.validatePassword(
+      passwordOld,
+      password,
+    );
+    console.log({ isValid });
+    if (!isValid) {
+      throw new HttpException(
+        'Password is invalid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    return await this.authService.hashPassword(passwordNew);
   }
 
-  private async checkEmailAndName(
+  // private async validatePassword(
+  //   passwordNew: string,
+  //   passwordOld: string,
+  //   password: string,
+  // ): Promise<void> {
+  //   if (passwordNew && passwordOld) {
+  //     const passwordValid = await this.authService.validatePassword(
+  //       passwordOld,
+  //       password,
+  //     );
+
+  //     if (!passwordValid) {
+  //       throw new HttpException(
+  //         'Password is invalid',
+  //         HttpStatus.UNPROCESSABLE_ENTITY,
+  //       );
+  //     }
+  //   }
+  // }
+
+  private async checkUniqueEmailAndName(
     email: string,
     username: string,
   ): Promise<void> {
@@ -235,16 +261,16 @@ export class UserService {
     }
   }
 
-  private async checkAndGetUserById(id: number): Promise<UserEntity> {
-    const userExists = await this.userRepository.getUserById(id);
-    if (!userExists) {
-      throw new HttpException(
-        'User not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-    return userExists;
-  }
+  // private async checkAndGetUserById(id: number): Promise<UserEntity> {
+  //   const userExists = await this.userRepository.getUserById(id);
+  //   if (!userExists) {
+  //     throw new HttpException(
+  //       'User not found',
+  //       HttpStatus.UNPROCESSABLE_ENTITY,
+  //     );
+  //   }
+  //   return userExists;
+  // }
 
   private getToken(tokenString: string): string {
     const token = tokenString.split(' ')[1];
@@ -260,13 +286,16 @@ export class UserService {
   private generateStructureUpdateUser(
     userUpdateDto: UserUpdateDto,
   ): UserUpdateDto {
-    const dataUpdate = { ...userUpdateDto };
-    for (const key in dataUpdate) {
-      if (!dataUpdate[key]) {
-        delete dataUpdate[key];
-      }
-    }
-    return dataUpdate;
+    return Object.fromEntries(
+      Object.entries(userUpdateDto).filter(([_, value]) => value !== ''),
+    );
+    // const dataUpdate = { ...userUpdateDto };
+    // for (const key in dataUpdate) {
+    //   if (!dataUpdate[key]) {
+    //     delete dataUpdate[key];
+    //   }
+    // }
+    // return dataUpdate;
   }
 
   private async generateUserWithHashedPassword(

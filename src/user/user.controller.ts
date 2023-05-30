@@ -26,6 +26,7 @@ import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
 import { UserBuildClearResponseDto } from './dto/userBuildClearResponse.dto';
+import { Token } from '@app/auth/iterface/auth.interface';
 
 @ApiTags('user')
 @Controller()
@@ -53,30 +54,30 @@ export class UserController {
     return this.userService.buildUserResponse(user);
   }
 
-  @UseGuards(AuthGuard)
-  @Get('user')
-  @ApiHeader({
-    name: 'Authorization',
-    description: 'Authorization: Token jwt.token.here',
-  })
-  @ApiBody({ type: UserRequestLoginDto })
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new ValidationPipe())
-  async getUser(
-    @Headers('Authorization') auth: string | undefined,
-  ): Promise<UserBuildResponseDto> {
-    const user = await this.userService.getUserByToken(auth);
-    return this.userService.buildUserResponse(user);
-  }
+  // @UseGuards(AuthGuard)
+  // @Get('user')
+  // @ApiHeader({
+  //   name: 'Authorization',
+  //   description: 'Authorization: Token jwt.token.here',
+  // })
+  // @ApiBody({ type: UserRequestLoginDto })
+  // @ApiCreatedResponse({ type: UserBuildResponseDto })
+  // @UsePipes(new ValidationPipe())
+  // async getUser(
+  //   @Headers('Authorization') auth: string | undefined,
+  // ): Promise<UserBuildResponseDto> {
+  //   const user = await this.userService.getUserByToken(auth);
+  //   return this.userService.buildUserResponse(user);
+  // }
 
-  @Get('user/:id')
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
-  async getUserById(
-    @Param('id') id: number,
-  ): Promise<UserBuildClearResponseDto> {
-    const user = await this.userService.getUserById(+id);
-    return this.userService.buildUserClearResponse(user);
-  }
+  // @Get('user/:id')
+  // @ApiCreatedResponse({ type: UserBuildResponseDto })
+  // async getUserById(
+  //   @Param('id') id: number,
+  // ): Promise<UserBuildClearResponseDto> {
+  //   const user = await this.userService.getUserById(+id);
+  //   return this.userService.buildUserClearResponse(user);
+  // }
 
   @UseGuards(AuthGuard)
   @Put('user')
@@ -88,12 +89,9 @@ export class UserController {
   @ApiCreatedResponse({ type: UserBuildResponseDto })
   @UsePipes(new ValidationPipe())
   async updateCurrentUser(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Body('user') userUpdateDto: UserUpdateDto,
   ): Promise<UserBuildResponseDto> {
-    const { id } = await this.userService.getUserByToken(auth);
-    const user = await this.userService.updateUser(id, userUpdateDto);
-    // return 'ddd' as any;
-    return this.userService.buildUserResponse(user);
+    return await this.userService.updateUser(userUpdateDto, auth);
   }
 }
