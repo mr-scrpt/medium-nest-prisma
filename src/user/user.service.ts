@@ -78,25 +78,9 @@ export class UserService {
   async login(userLoginDto: UserLoginDto): Promise<UserEntity> {
     const { email, password } = userLoginDto;
 
-    const user = await this.getUserByEmail(email);
-    if (!user) {
-      throw new HttpException(
-        'Email or password are invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    const user = await this.checkAndGetUserByEmail(email);
 
-    const passwordValid = await this.authService.validatePassword(
-      password,
-      user.password,
-    );
-
-    if (!passwordValid) {
-      throw new HttpException(
-        'Email or password are invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    await this.checkValidatePassword(password, user.password);
 
     return user;
   }
@@ -107,6 +91,17 @@ export class UserService {
         email,
       },
     });
+  }
+
+  async checkAndGetUserByEmail(email: string): Promise<UserEntity> {
+    const user = await this.getUserByEmail(email);
+    if (!user) {
+      throw new HttpException(
+        'Email or password are invalid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return user;
   }
 
   async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
@@ -194,6 +189,23 @@ export class UserService {
     }
   }
 
+  private async checkValidatePassword(
+    passwordLeft: string,
+    passwordRight: string,
+  ): Promise<void> {
+    const isValid = await this.authService.validatePassword(
+      passwordLeft,
+      passwordRight,
+    );
+
+    if (!isValid) {
+      throw new HttpException(
+        'Password is invalid',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
   private async validateAndGenerateHashedPassword(
     passwordNew: string,
     passwordOld: string,
@@ -210,17 +222,7 @@ export class UserService {
       return '';
     }
 
-    const isValid = await this.authService.validatePassword(
-      passwordOld,
-      password,
-    );
-    console.log({ isValid });
-    if (!isValid) {
-      throw new HttpException(
-        'Password is invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    await this.checkValidatePassword(passwordOld, password);
 
     return await this.authService.hashPassword(passwordNew);
   }
