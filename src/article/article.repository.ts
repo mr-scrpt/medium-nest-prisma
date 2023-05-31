@@ -36,8 +36,6 @@ export class ArticleRepository {
       include,
     });
 
-    console.log('articles', articles);
-
     return articles;
   }
 
@@ -97,7 +95,6 @@ export class ArticleRepository {
 
   async updateArticleBySlug(
     slug: string,
-    slugNew: string,
     articleUpdateDto: ArticleUpdateDto,
   ): Promise<ArticleBuildEntity> {
     const includeParams = {
@@ -107,7 +104,6 @@ export class ArticleRepository {
 
     const data = {
       ...articleUpdateDto,
-      slug: slugNew,
     };
 
     const include = this.prepareIncludeParams(includeParams);

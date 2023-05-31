@@ -7,7 +7,7 @@ import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { CommonService } from '@app/common/common.service';
-import { UserRepository } from './user.repository';
+import { UserRepository } from '@app/user/user.repository';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { PrismaService } from '@app/prisma/prisma.service';
 

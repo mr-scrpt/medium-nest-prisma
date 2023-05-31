@@ -25,13 +25,10 @@ export class ArticleService {
   ): Promise<ArticleBuildResponseFeedDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
 
-    const [articles, articleCount] = await Promise.all([
-      await this.articleRepository.getArticleAllByParams(
-        queryParams,
-        currentUserId,
-      ),
-      await this.articleRepository.countFeed(),
-    ]);
+    const [articles, articleCount] = await this.getArticleFeedWithCount(
+      queryParams,
+      currentUserId,
+    );
 
     const data = await this.getArticlesFeedWithFavoritesData(
       articles,
@@ -47,14 +44,7 @@ export class ArticleService {
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
-    const article = await this.articleRepository.getArticleBySlug(slug);
-
-    if (!article) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    const article = await this.checkAndGetArticleBySlug(slug);
 
     const data = this.getArticleWithFavoritesData(article, currentUserId);
     const buildData = this.buildArticleResponse(data);
@@ -65,64 +55,33 @@ export class ArticleService {
     articleCreateDto: ArticleCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
-    console.log('in create article');
     const slug = this.common.slugGenerator(articleCreateDto.title);
 
-    const articleExist = await this.articleRepository.getArticleBySlug(slug);
-
-    if (articleExist && articleExist.slug === slug) {
-      throw new HttpException(
-        'Article with this title already exist',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    await this.checkUniqueArticleBySlug(slug);
 
     const currentUserId = this.user.getUserIdFromToken(token);
 
-    const article = await this.articleRepository.createArticle(
+    const articleCreated = await this.createAndCheckArticle(
       articleCreateDto,
       slug,
       currentUserId,
     );
 
-    if (!article) {
-      throw new HttpException(
-        'Article not created',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    const data = this.getArticleWithFavoritesData(article, currentUserId);
+    const data = this.getArticleWithFavoritesData(
+      articleCreated,
+      currentUserId,
+    );
     const buildData = this.buildArticleResponse(data);
     return buildData;
   }
 
   async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
     const currentUserId = this.user.getUserIdFromToken(token);
-    const article = await this.articleRepository.getArticleBySlug(slug);
+    const article = await this.checkAndGetArticleBySlug(slug);
 
-    if (article?.author?.id !== currentUserId) {
-      throw new HttpException(
-        'You are not the author of this article',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    this.checkArticleAuthor(article, currentUserId);
 
-    if (!article) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    try {
-      await this.articleRepository.deleteArticleBySlug(slug);
-    } catch (error) {
-      throw new HttpException(
-        'Article not deleted',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    await this.deleteArticleBySlug(slug);
   }
 
   async updateArticleBySlugAndToken(
@@ -131,47 +90,25 @@ export class ArticleService {
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
-    const slugNew = this.common.slugGenerator(articleUpdateDto.title);
-    const articleExist = await this.articleRepository.getArticleBySlug(slug);
+    const article = await this.checkAndGetArticleBySlug(slug);
 
-    if (!articleExist) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (articleExist.slug === slugNew) {
-      throw new HttpException(
-        'Article with this title already exist',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const slugNew = this.checkAndGenerateSlug(slug, articleUpdateDto.title);
+    await this.checkUniqueSlug(slugNew);
 
-    if (articleExist.author.id !== currentUserId) {
-      throw new HttpException(
-        'You are not the author of this article',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    this.checkArticleAuthor(article, currentUserId);
 
-    try {
-      const articleUpdate = await this.articleRepository.updateArticleBySlug(
-        slug,
-        slugNew,
-        articleUpdateDto,
-      );
-      const data = this.getArticleWithFavoritesData(
-        articleUpdate,
-        currentUserId,
-      );
-      const buildData = this.buildArticleResponse(data);
-      return buildData;
-    } catch (error) {
-      throw new HttpException(
-        'Article not updated',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const dataUpdate = {
+      ...articleUpdateDto,
+      slug: slugNew,
+    };
+
+    const articleUpdated = await this.updateArticleBySlug(slug, dataUpdate);
+
+    const data = this.getArticleWithFavoritesData(
+      articleUpdated,
+      currentUserId,
+    );
+    return this.buildArticleResponse(data);
   }
 
   async addToFavoritesBySlugAndToken(
@@ -237,6 +174,7 @@ export class ArticleService {
       return this.getArticleWithFavoritesData(article, currentUserId);
     });
   }
+
   private getArticleWithFavoritesData(
     article: ArticleBuildEntity,
     currentUserId: number | null,
@@ -250,6 +188,148 @@ export class ArticleService {
       favorited,
     };
   }
+
+  private async getArticleFeedWithCount(
+    queryParams: IArticleQueryParamsRequered,
+    currentUserId: number,
+  ): Promise<[ArticleBuildEntity[], number]> {
+    return await Promise.all([
+      await this.articleRepository.getArticleAllByParams(
+        queryParams,
+        currentUserId,
+      ),
+      await this.articleRepository.countFeed(),
+    ]);
+  }
+
+  private async checkAndGetArticleBySlug(
+    slug: string,
+  ): Promise<ArticleBuildEntity> {
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
+    if (!article) {
+      throw new HttpException(
+        'Article with this slug not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return article;
+  }
+
+  private checkAndGenerateSlug(slug: string, title: string): string {
+    if (!title) {
+      return;
+    }
+    const slugNew = this.common.slugGenerator(title);
+    if (title && slug == slugNew) {
+      throw new HttpException(
+        'Article with this slug already exist',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return slugNew;
+  }
+
+  private async checkUniqueArticleBySlug(
+    slug: string,
+  ): Promise<ArticleBuildEntity> {
+    const article = await this.articleRepository.getArticleBySlug(slug);
+
+    if (article) {
+      throw new HttpException(
+        'Article with this slug already exist',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return article;
+  }
+
+  private async checkUniqueSlug(slugNew: string): Promise<void> {
+    console.log('in checkUniqueSlug', slugNew);
+
+    if (!slugNew) {
+      console.log('slugNew is empty');
+      return;
+    }
+
+    const articleExist = await this.checkUniqueArticleBySlug(slugNew);
+
+    if (articleExist) {
+      throw new HttpException(
+        'Article with this slug already exist ====',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private checkArticleAuthor(
+    article: ArticleBuildEntity,
+    currentUserId: number,
+  ): void {
+    if (article.author?.id !== currentUserId) {
+      throw new HttpException(
+        'You are not the author of this article',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  private async deleteArticleBySlug(slug: string): Promise<void> {
+    try {
+      await this.articleRepository.deleteArticleBySlug(slug);
+    } catch (error) {
+      throw new HttpException(
+        'Article not deleted',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async updateArticleBySlug(
+    slug: string,
+    articleUpdateDto: ArticleUpdateDto,
+  ) {
+    try {
+      return await this.articleRepository.updateArticleBySlug(
+        slug,
+        articleUpdateDto,
+      );
+    } catch (error) {
+      throw new HttpException(
+        'Article not updated',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async createAndCheckArticle(
+    articleCreateDto: ArticleCreateDto,
+    slug: string,
+    currentUserId: number,
+  ): Promise<ArticleBuildEntity> {
+    const article = await this.articleRepository.createArticle(
+      articleCreateDto,
+      slug,
+      currentUserId,
+    );
+
+    if (!article) {
+      throw new HttpException('Article not created', HttpStatus.BAD_REQUEST);
+    }
+    return article;
+  }
+
+  // private checkArticleUniqueSlug(
+  //   article: ArticleBuildEntity,
+  //   slug: string,
+  // ): void {
+  //   if (article.slug === slug) {
+  //     throw new HttpException(
+  //       'Article with this title already exist',
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  // }
 
   private buildArticleResponse(
     article: ArticleResponseDto,
