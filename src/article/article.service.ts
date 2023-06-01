@@ -116,14 +116,12 @@ export class ArticleService {
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
+    await this.checkAndGetArticleBySlug(slug);
 
-    const articleExist = await this.articleRepository.getArticleBySlug(slug);
-    if (!articleExist) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    const isFavorite = await this.isFavorited(slug, currentUserId);
+    console.log(isFavorite);
+
+    this.checkArticleInFavorites(isFavorite);
 
     const articleWithFavorites =
       await this.articleRepository.addToFavoriteBySlug(slug, currentUserId);
@@ -142,14 +140,12 @@ export class ArticleService {
   ): Promise<ArticleBuildResponseDto> {
     const currentUserId = this.user.getUserIdFromToken(token);
 
-    const articleExist = await this.articleRepository.getArticleBySlug(slug);
+    await this.checkAndGetArticleBySlug(slug);
 
-    if (!articleExist) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    const isFavorite = await this.isFavorited(slug, currentUserId);
+    console.log(isFavorite);
+
+    this.checkArticleIsNotInFavorites(isFavorite);
 
     const articleWithFavorites =
       await this.articleRepository.deleteFromFavoriteBySlug(
@@ -256,7 +252,7 @@ export class ArticleService {
 
     if (articleExist) {
       throw new HttpException(
-        'Article with this slug already exist ====',
+        'Article with this slug already exist',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -319,17 +315,44 @@ export class ArticleService {
     return article;
   }
 
-  // private checkArticleUniqueSlug(
-  //   article: ArticleBuildEntity,
-  //   slug: string,
-  // ): void {
-  //   if (article.slug === slug) {
-  //     throw new HttpException(
-  //       'Article with this title already exist',
-  //       HttpStatus.BAD_REQUEST,
-  //     );
-  //   }
-  // }
+  private async isFavorited(
+    slug: string,
+    currentUserId: number,
+  ): Promise<boolean> {
+    const article = await this.checkAndGetArticleBySlug(slug);
+    console.log('Article in isFavorited', article);
+    const isInFavorites = article.favoritedBy.some((user) => {
+      console.log('Current user id', currentUserId);
+      console.log('User id in article', user.userId);
+      if (user.userId === currentUserId) {
+        return true;
+      }
+    });
+
+    if (isInFavorites) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private checkArticleInFavorites(isFavorite: boolean): void {
+    if (isFavorite) {
+      throw new HttpException(
+        'This article is already in favorites',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private checkArticleIsNotInFavorites(isFavorite: boolean): void {
+    if (!isFavorite) {
+      throw new HttpException(
+        'You can not delete from favorites your article',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 
   private buildArticleResponse(
     article: ArticleResponseDto,
