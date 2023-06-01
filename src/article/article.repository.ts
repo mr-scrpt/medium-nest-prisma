@@ -242,10 +242,8 @@ export class ArticleRepository {
 
   private prepareWhereParams(
     params: IArticleQueryParamsRequered,
-    // currentUserId: number,
   ): Prisma.ArticleWhereInput {
     const { tag, author, favorited } = params;
-    console.log('favorited', favorited);
     const where = {
       AND: [],
     };
