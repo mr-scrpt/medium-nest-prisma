@@ -193,6 +193,37 @@ export class ArticleRepository {
     return article;
   }
 
+  async changeFavoriteCount(direction: string, slug: string): Promise<void> {
+    const article = await this.prisma.article.findUnique({
+      where: {
+        slug,
+      },
+    });
+
+    console.log(article);
+
+    if (direction === 'up') {
+      await this.prisma.article.update({
+        where: {
+          slug,
+        },
+        data: {
+          favoritesCount: article.favoritesCount + 1,
+        },
+      });
+    }
+    if (direction === 'down' && article.favoritesCount > 0) {
+      await this.prisma.article.update({
+        where: {
+          slug,
+        },
+        data: {
+          favoritesCount: article.favoritesCount - 1,
+        },
+      });
+    }
+  }
+
   async countFeed(): Promise<number> {
     const count = await this.prisma.article.count();
     return count;

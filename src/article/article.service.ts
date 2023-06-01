@@ -119,9 +119,9 @@ export class ArticleService {
     await this.checkAndGetArticleBySlug(slug);
 
     const isFavorite = await this.isFavorited(slug, currentUserId);
-    console.log(isFavorite);
 
     this.checkArticleInFavorites(isFavorite);
+    this.incrementFavoriteCount(slug);
 
     const articleWithFavorites =
       await this.articleRepository.addToFavoriteBySlug(slug, currentUserId);
@@ -143,9 +143,9 @@ export class ArticleService {
     await this.checkAndGetArticleBySlug(slug);
 
     const isFavorite = await this.isFavorited(slug, currentUserId);
-    console.log(isFavorite);
 
     this.checkArticleIsNotInFavorites(isFavorite);
+    await this.decrementFavoriteCount(slug);
 
     const articleWithFavorites =
       await this.articleRepository.deleteFromFavoriteBySlug(
@@ -320,10 +320,7 @@ export class ArticleService {
     currentUserId: number,
   ): Promise<boolean> {
     const article = await this.checkAndGetArticleBySlug(slug);
-    console.log('Article in isFavorited', article);
     const isInFavorites = article.favoritedBy.some((user) => {
-      console.log('Current user id', currentUserId);
-      console.log('User id in article', user.userId);
       if (user.userId === currentUserId) {
         return true;
       }
@@ -350,6 +347,28 @@ export class ArticleService {
       throw new HttpException(
         'You can not delete from favorites your article',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private async incrementFavoriteCount(slug: string): Promise<void> {
+    try {
+      await this.articleRepository.changeFavoriteCount('up', slug);
+    } catch (error) {
+      throw new HttpException(
+        'Favorites count not incremented',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async decrementFavoriteCount(slug: string): Promise<void> {
+    try {
+      await this.articleRepository.changeFavoriteCount('down', slug);
+    } catch (error) {
+      throw new HttpException(
+        'Favorites count not decremented',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
