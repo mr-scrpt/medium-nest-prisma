@@ -16,10 +16,8 @@ export class AuthGuard implements CanActivate {
     const tokenString = request.headers.authorization;
 
     if (!tokenString) {
-      // return false;
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
-    console.log('tokenString before', tokenString);
 
     try {
       await this.userService.getUserByToken(tokenString);
