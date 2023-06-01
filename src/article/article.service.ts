@@ -27,7 +27,6 @@ export class ArticleService {
 
     const [articles, articleCount] = await this.getArticleFeedWithCount(
       queryParams,
-      currentUserId,
     );
 
     const data = await this.getArticlesFeedWithFavoritesData(
@@ -145,7 +144,7 @@ export class ArticleService {
     const isFavorite = await this.isFavorited(slug, currentUserId);
 
     this.checkArticleIsNotInFavorites(isFavorite);
-    await this.decrementFavoriteCount(slug);
+    this.decrementFavoriteCount(slug);
 
     const articleWithFavorites =
       await this.articleRepository.deleteFromFavoriteBySlug(
@@ -187,13 +186,9 @@ export class ArticleService {
 
   private async getArticleFeedWithCount(
     queryParams: IArticleQueryParamsRequered,
-    currentUserId: number,
   ): Promise<[ArticleBuildEntity[], number]> {
     return await Promise.all([
-      await this.articleRepository.getArticleAllByParams(
-        queryParams,
-        currentUserId,
-      ),
+      await this.articleRepository.getArticleAllByParams(queryParams),
       await this.articleRepository.countFeed(),
     ]);
   }

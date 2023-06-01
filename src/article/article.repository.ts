@@ -20,14 +20,16 @@ export class ArticleRepository {
 
   async getArticleAllByParams(
     queryParams: IArticleQueryParamsRequered,
-    currentUserId: number,
+    // currentUserId: number,
   ): Promise<ArticleBuildEntity[]> {
     const params = this.prepareQueryParams(queryParams);
-    const where = this.prepareWhereParams(queryParams, currentUserId);
+    const where = this.prepareWhereParams(queryParams);
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
     };
+
+    console.log('where', where);
 
     const include = this.prepareIncludeParams(includeParams);
     const articles = await this.prisma.article.findMany({
@@ -240,10 +242,10 @@ export class ArticleRepository {
 
   private prepareWhereParams(
     params: IArticleQueryParamsRequered,
-    currentUserId: number,
+    // currentUserId: number,
   ): Prisma.ArticleWhereInput {
     const { tag, author, favorited } = params;
-    const favBool = favorited === 'true' ? true : false;
+    console.log('favorited', favorited);
     const where = {
       AND: [],
     };
@@ -263,15 +265,18 @@ export class ArticleRepository {
         },
       });
     }
-    if (favBool) {
+    if (favorited) {
       where.AND.push({
         favoritedBy: {
           some: {
-            userId: currentUserId,
+            user: {
+              username: favorited,
+            },
           },
         },
       });
     }
+
     return where;
   }
 
