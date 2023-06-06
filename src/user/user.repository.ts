@@ -35,6 +35,15 @@ export class UserRepository {
     });
   }
 
+  async getUserByName(username: string): Promise<UserEntity | null> {
+    const where = {
+      username,
+    };
+    return await this.prisma.user.findUnique({
+      where,
+    });
+  }
+
   async checkEmailAndName(email: string, username: string): Promise<boolean> {
     const user = await this.prisma.user.findFirst({
       where: {
