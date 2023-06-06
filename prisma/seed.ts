@@ -1,11 +1,20 @@
-import { PrismaClient, Tag, User } from '@prisma/client';
+import {
+  Article,
+  PrismaClient,
+  Tag,
+  User,
+  UserToArticle,
+} from '@prisma/client';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
 
-const tag: Array<Omit<Tag, 'id'>> = [
+const tagList: Array<Omit<Tag, 'id'>> = [
   {
     name: 'dragon',
+  },
+  {
+    name: 'coffee',
   },
   {
     name: 'nest',
@@ -32,6 +41,66 @@ const userList: Array<Omit<User, 'id'>> = [
   },
 ];
 
+const articleList: Array<Omit<Article, 'id'>> = [
+  {
+    slug: 'how-to-train-your-dragon',
+    title: 'How to train your dragon',
+    description: 'Ever wonder how?',
+    body: 'It takes a Jacobian',
+    tagList: ['dragons', 'training'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    favoritesCount: 0,
+    authorId: 1,
+  },
+  {
+    slug: 'how-to-train-your-dragon-2',
+    title: 'How to train your dragon 2',
+    description: 'So toothless',
+    body: 'It a dragon',
+    tagList: ['dragons', 'training'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    favoritesCount: 0,
+    authorId: 2,
+  },
+  {
+    slug: 'how-to-train-your-dragon-3',
+    title: 'How to train your dragon 3',
+    description: 'So toothless',
+    body: 'It a dragon',
+    tagList: ['dragons', 'training'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    favoritesCount: 0,
+    authorId: 1,
+  },
+];
+
+const UserToArticleList: Array<UserToArticle> = [
+  {
+    id: 1,
+    userId: 1,
+    articleId: 1,
+  },
+  {
+    id: 2,
+    userId: 2,
+    articleId: 1,
+  },
+
+  {
+    id: 3,
+    userId: 1,
+    articleId: 2,
+  },
+  {
+    id: 4,
+    userId: 2,
+    articleId: 3,
+  },
+];
+
 type Entity = {
   [key: string]: any;
 };
@@ -55,8 +124,10 @@ async function execute<T extends Entity, K extends keyof T>(
 }
 
 async function main() {
-  await execute(tag, 'tag', 'name');
+  await execute(tagList, 'tag', 'name');
   await execute(userList, 'user', 'email');
+  await execute(articleList, 'article', 'slug');
+  await execute(UserToArticleList, 'userToArticle', 'id');
   // await execute(userList, 'user', 'id');
 }
 // execute the main function
