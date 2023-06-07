@@ -95,6 +95,19 @@ export class UserService {
     return await this.checkAndGetUserById(id);
   }
 
+  async checkAndGetUserByName(username: string): Promise<UserEntity> {
+    const user = await this.userRepository.getUserByName(username);
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return user;
+  }
+
+  // async getUserByName(username: string): Promise<UserEntity> {
+  //   return await this.getUserByName(username);
+  // }
+
   getUserIdFromToken(tokenString: string): number {
     try {
       const { id } = this.authService.decodeToken(tokenString) as TokenDecode;

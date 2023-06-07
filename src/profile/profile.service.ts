@@ -1,24 +1,47 @@
-import { UserRepository } from '@app/user/user.repository';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ProfileClearDto } from './dto/profileClear.dto';
 import { ProfileBuildResponseDto } from './dto/profileBuildResponse.dto';
 import { ProfileResponseDto } from './dto/profileResponse.dto';
+import { UserService } from '@app/user/user.service';
+import { FollowService } from '@app/follow/follow.service';
+import { Token } from '@app/auth/iterface/auth.interface';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly followService: FollowService,
+  ) {}
 
   async getProfile(username: string): Promise<ProfileBuildResponseDto> {
     const user = await this.checkAndGetProfile(username);
     return this.buildProfileResponse({ ...user, following: false });
   }
 
-  async checkAndGetProfile(username: string): Promise<ProfileClearDto> {
-    const user = await this.userRepository.getUserByName(username);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    return user;
+  async followProfile(
+    username: string,
+    token: Token,
+  ): Promise<ProfileBuildResponseDto> {
+    const userCurrent = await this.userService.getUserByToken(token);
+    const user = await this.userService.checkAndGetUserByName(username);
+    await this.followService.checkIsFollowing(userCurrent.id, user.id);
+    await this.followService.followUser(userCurrent.id, user.id);
+    return this.buildProfileResponse({ ...user, following: true });
+  }
+
+  async unfollowProfile(
+    username: string,
+    token: Token,
+  ): Promise<ProfileBuildResponseDto> {
+    const userCurrent = await this.userService.getUserByToken(token);
+    const user = await this.userService.checkAndGetUserByName(username);
+    await this.followService.checkIsNotFollowing(userCurrent.id, user.id);
+    await this.followService.unfollowUser(userCurrent.id, user.id);
+    return this.buildProfileResponse({ ...user, following: false });
+  }
+
+  private async checkAndGetProfile(username: string): Promise<ProfileClearDto> {
+    return await this.userService.checkAndGetUserByName(username);
   }
 
   private buildProfileResponse(
