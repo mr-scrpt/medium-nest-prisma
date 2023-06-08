@@ -38,18 +38,6 @@ export class ArticleService {
     return buildData;
   }
 
-  async getArticleBySlugAndToken(
-    slug: string,
-    token: Token,
-  ): Promise<ArticleBuildResponseDto> {
-    const currentUserId = this.user.getUserIdFromToken(token);
-    const article = await this.checkAndGetArticleBySlug(slug);
-
-    const data = this.getArticleWithFavoritesData(article, currentUserId);
-    const buildData = this.buildArticleResponse(data);
-    return buildData;
-  }
-
   async getArticleFolowByParamsAndToken(
     queryParams: IArticleQueryParamsRequered,
     token: Token,
@@ -61,17 +49,25 @@ export class ArticleService {
       currentUserId,
     );
 
-    console.log('articles', articles);
-    console.log('articleCount', articleCount);
+    const data = await this.getArticlesFeedWithFavoritesData(
+      articles,
+      currentUserId,
+    );
 
-    // const data = await this.getArticlesFeedWithFavoritesData(
-    //   articles,
-    //   currentUserId,
-    // );
+    const buildData = this.buildArticlesFeedResponse(data, articleCount);
+    return buildData;
+  }
 
-    // const buildData = this.buildArticlesFeedResponse(data, articleCount);
-    // return buildData;
-    return null;
+  async getArticleBySlugAndToken(
+    slug: string,
+    token: Token,
+  ): Promise<ArticleBuildResponseDto> {
+    const currentUserId = this.user.getUserIdFromToken(token);
+    const article = await this.checkAndGetArticleBySlug(slug);
+
+    const data = this.getArticleWithFavoritesData(article, currentUserId);
+    const buildData = this.buildArticleResponse(data);
+    return buildData;
   }
 
   async createArticle(
@@ -225,7 +221,7 @@ export class ArticleService {
         queryParams,
         userId,
       ),
-      await this.articleRepository.countFeed(),
+      await this.articleRepository.countFeedFollow(userId),
     ]);
   }
 

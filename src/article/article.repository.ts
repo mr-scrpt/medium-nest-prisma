@@ -67,6 +67,19 @@ export class ArticleRepository {
     return articles;
   }
 
+  async countFeedFollow(currentUserId: number): Promise<number> {
+    const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
+    const where: Prisma.ArticleWhereInput = {
+      authorId: {
+        in: followAuthorsIds,
+      },
+    };
+
+    return await this.prisma.article.count({
+      where,
+    });
+  }
+
   async getFollowAuthorsIds(currentUserId: number): Promise<number[]> {
     const followAuthors = await this.prisma.userToUser.findMany({
       where: {
@@ -241,8 +254,6 @@ export class ArticleRepository {
         slug,
       },
     });
-
-    console.log(article);
 
     if (direction === 'up') {
       await this.prisma.article.update({
