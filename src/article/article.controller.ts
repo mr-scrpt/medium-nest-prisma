@@ -6,7 +6,6 @@ import {
   UseGuards,
   Body,
   Headers,
-  ValidationPipe,
   UsePipes,
   Param,
   Put,
@@ -24,6 +23,7 @@ import { Token } from '@app/auth/iterface/auth.interface';
 import { IArtilceQueryParamsOptional } from './interface/query.interface';
 import { ArticleRequestCreateDto } from './dto/swagger/articleRequestCreate.dto';
 import { ArticleBuildResponseFeedDto } from './dto/articleBuildResponseFeed.dto';
+import { CustomValidationPipe } from '@app/common/common.pipe';
 
 @ApiTags('article')
 @Controller('article')
@@ -32,7 +32,7 @@ export class ArticleController {
 
   @Get()
   @ApiCreatedResponse({ type: ArticleBuildResponseFeedDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getArticleAll(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
@@ -47,6 +47,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Get('feed')
   @ApiCreatedResponse({ type: ArticleBuildResponseFeedDto })
+  @UsePipes(new CustomValidationPipe())
   async getArticleFeed(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
@@ -62,7 +63,7 @@ export class ArticleController {
   @Post()
   @ApiBody({ type: ArticleRequestCreateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async createArticle(
     @Headers('Authorization') auth: string | undefined,
     @Body() articleCreateDto: ArticleCreateDto,
@@ -72,7 +73,7 @@ export class ArticleController {
 
   @Get(':slug')
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getArticleBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
@@ -82,7 +83,7 @@ export class ArticleController {
 
   @UseGuards(AuthGuard)
   @Delete(':slug')
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async deleteArticleBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
@@ -94,7 +95,7 @@ export class ArticleController {
   @Put(':slug')
   @ApiBody({ type: ArticleRequestUpdateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async updateArticleBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
@@ -110,7 +111,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Post(':slug/favorite')
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async addFavoriteBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
@@ -121,7 +122,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Delete(':slug/favorite')
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async deleteFavoriteBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,

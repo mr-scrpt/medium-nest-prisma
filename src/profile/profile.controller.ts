@@ -12,12 +12,14 @@ import { ProfileService } from '@app/profile/profile.service';
 import { ProfileBuildResponseDto } from '@app/profile/dto/profileBuildResponse.dto';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { Token } from '@app/auth/iterface/auth.interface';
+import { CustomValidationPipe } from '@app/common/common.pipe';
 
 @ApiTags('profiles')
 @Controller('profiles')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
   @Get(':username')
+  @UsePipes(new CustomValidationPipe())
   async getProfile(
     @Param('username') username: string,
   ): Promise<ProfileBuildResponseDto> {
@@ -26,7 +28,7 @@ export class ProfileController {
 
   @Get(':username/follow')
   @UseGuards(AuthGuard)
-  @UsePipes()
+  @UsePipes(new CustomValidationPipe())
   async followProfile(
     @Param('username') username: string,
     @Headers('Authorization') auth: Token,
@@ -36,7 +38,7 @@ export class ProfileController {
 
   @Delete(':username/follow')
   @UseGuards(AuthGuard)
-  @UsePipes()
+  @UsePipes(new CustomValidationPipe())
   async unfollowProfile(
     @Param('username') username: string,
     @Headers('Authorization') auth: Token,

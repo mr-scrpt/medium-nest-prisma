@@ -7,7 +7,6 @@ import {
   Body,
   UseGuards,
   UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { UserRequestCreateDto } from '@app/user/dto/swagger/userRequestCreate.dto';
 import {
@@ -25,6 +24,7 @@ import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
 import { Token } from '@app/auth/iterface/auth.interface';
+import { CustomValidationPipe } from '@app/common/common.pipe';
 
 @ApiTags('user')
 @Controller()
@@ -34,7 +34,7 @@ export class UserController {
   @Post('users')
   @ApiBody({ type: UserRequestCreateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async createUsers(
     @Body('user') userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
@@ -44,7 +44,7 @@ export class UserController {
   @Post('users/login')
   @ApiBody({ type: UserRequestLoginDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async login(
     @Body('user') userLoginDto: UserLoginDto,
   ): Promise<UserBuildResponseDto> {
@@ -59,7 +59,7 @@ export class UserController {
   })
   @ApiBody({ type: UserRequestLoginDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getUserCurrent(
     @Headers('Authorization') auth: string | undefined,
   ): Promise<UserBuildResponseDto> {
@@ -74,7 +74,7 @@ export class UserController {
   })
   @ApiBody({ type: UserRequestUpdateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async updateCurrentUser(
     @Headers('Authorization') auth: Token,
     @Body('user') userUpdateDto: UserUpdateDto,
