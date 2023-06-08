@@ -9,15 +9,14 @@ import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { CommonService } from '@app/common/common.service';
 import { UserRepository } from '@app/user/user.repository';
 import { Token } from '@app/auth/iterface/auth.interface';
-import { PrismaService } from '@app/prisma/prisma.service';
+// import { PrismaService } from '@app/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private authService: AuthService,
     private common: CommonService,
-    private userRepository: UserRepository,
-    private prisma: PrismaService,
+    private userRepository: UserRepository, // private prisma: PrismaService,
   ) {}
   async createUser(
     userCreateDto: UserCreateDto,
@@ -104,10 +103,6 @@ export class UserService {
     return user;
   }
 
-  // async getUserByName(username: string): Promise<UserEntity> {
-  //   return await this.getUserByName(username);
-  // }
-
   getUserIdFromToken(tokenString: string): number {
     try {
       const { id } = this.authService.decodeToken(tokenString) as TokenDecode;
@@ -117,16 +112,8 @@ export class UserService {
     }
   }
 
-  private async getUserByEmail(email: string): Promise<UserEntity> {
-    return await this.prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-  }
-
   private async checkAndGetUserByEmail(email: string): Promise<UserEntity> {
-    const user = await this.getUserByEmail(email);
+    const user = await this.userRepository.getUserByEmail(email);
     if (!user) {
       throw new HttpException(
         'Email or password are invalid',
