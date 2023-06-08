@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ValidateNested } from 'class-validator';
-import { ArticleCreateDto } from '../articleCreate.dto';
+import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 
 export class ArticleRequestCreateDto {
   @ApiProperty({ type: ArticleCreateDto })

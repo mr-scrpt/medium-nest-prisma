@@ -9,6 +9,9 @@ import { validate, ValidationError } from 'class-validator';
 
 export class CustomValidationPipe implements PipeTransform {
   async transform(value: any, metadata: ArgumentMetadata) {
+    console.log('value', value);
+    console.log('metadata', metadata);
+    return value;
     const object = plainToClass(metadata.metatype, value);
     const errors = await validate(object);
 

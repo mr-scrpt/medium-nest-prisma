@@ -13,20 +13,19 @@ import {
 } from '@nestjs/common';
 import { ArticleService } from '@app/article/article.service';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
-import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 import { ApiBody, ApiTags, ApiCreatedResponse } from '@nestjs/swagger';
 import { ArticleBuildResponseDto } from '@app/article/dto/articleBuildResponse.dto';
 import { ArticleUpdateDto } from '@app/article/dto/articleUpdate.dto';
-import { ArticleRequestUpdateDto } from '@app/article/dto/swagger/articleRequestUpdate.dto';
 import { parseQueryParams } from './article.helper';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { IArtilceQueryParamsOptional } from './interface/query.interface';
-import { ArticleRequestCreateDto } from './dto/swagger/articleRequestCreate.dto';
 import { ArticleBuildResponseFeedDto } from './dto/articleBuildResponseFeed.dto';
 import { CustomValidationPipe } from '@app/common/common.pipe';
+import { ArticleRequestCreateDto } from './dto/articleRequestCreate.dto';
+import { ArticleRequestUpdateDto } from './dto/articleRequestUpdate.dto';
 
-@ApiTags('article')
-@Controller('article')
+@ApiTags('articles')
+@Controller('articles')
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
@@ -66,7 +65,7 @@ export class ArticleController {
   @UsePipes(new CustomValidationPipe())
   async createArticle(
     @Headers('Authorization') auth: string | undefined,
-    @Body() articleCreateDto: ArticleCreateDto,
+    @Body() articleCreateDto: ArticleRequestCreateDto,
   ): Promise<ArticleBuildResponseDto> {
     return await this.articleService.createArticle(articleCreateDto, auth);
   }

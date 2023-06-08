@@ -27,6 +27,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       | ErrorResponse
       | StandartErrorResponse;
 
+    console.log('message', message);
+
     if (typeof message === 'string') {
       message = {
         errors: {

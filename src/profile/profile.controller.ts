@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Param,
+  Post,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -23,10 +24,11 @@ export class ProfileController {
   async getProfile(
     @Param('username') username: string,
   ): Promise<ProfileBuildResponseDto> {
+    console.log('username in controller', username);
     return await this.profileService.getProfile(username);
   }
 
-  @Get(':username/follow')
+  @Post(':username/follow')
   @UseGuards(AuthGuard)
   @UsePipes(new CustomValidationPipe())
   async followProfile(

@@ -10,6 +10,7 @@ import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticleBuildEntity } from './entity/articleBuild.entity';
 import { ArticleResponseDto } from './dto/articleResponse.dto';
+import { ArticleRequestCreateDto } from './dto/articleRequestCreate.dto';
 
 @Injectable()
 export class ArticleService {
@@ -71,17 +72,18 @@ export class ArticleService {
   }
 
   async createArticle(
-    articleCreateDto: ArticleCreateDto,
+    articleCreateDto: ArticleRequestCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
-    const slug = this.common.slugGenerator(articleCreateDto.title);
+    const { article } = articleCreateDto;
+    const slug = this.common.slugGenerator(article.title);
 
     await this.checkUniqueArticleBySlug(slug);
 
     const currentUserId = this.user.getUserIdFromToken(token);
 
     const articleCreated = await this.createAndCheckArticle(
-      articleCreateDto,
+      article,
       slug,
       currentUserId,
     );
