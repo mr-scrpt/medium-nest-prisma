@@ -41,6 +41,46 @@ export class ArticleRepository {
     return articles;
   }
 
+  async getArticleFollowByParams(
+    queryParams: IArticleQueryParamsRequered,
+    currentUserId: number,
+  ): Promise<ArticleBuildEntity[]> {
+    const params = this.prepareQueryParams(queryParams);
+    const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
+    const includeParams = {
+      author: authorBaseSelect,
+      favoritedBy: favoritedBaseSelect,
+    };
+    const where: Prisma.ArticleWhereInput = {
+      authorId: {
+        in: followAuthorsIds,
+      },
+    };
+
+    const include = this.prepareIncludeParams(includeParams);
+    const articles = await this.prisma.article.findMany({
+      ...params,
+      where,
+      include,
+    });
+
+    return articles;
+  }
+
+  async getFollowAuthorsIds(currentUserId: number): Promise<number[]> {
+    const followAuthors = await this.prisma.userToUser.findMany({
+      where: {
+        followerId: currentUserId,
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const followAuthorsIds = followAuthors.map((item) => item.followingId);
+    return followAuthorsIds;
+  }
+
   async getArticleBySlug(slug: string): Promise<ArticleBuildEntity | null> {
     const includeParams = {
       author: authorBaseSelect,

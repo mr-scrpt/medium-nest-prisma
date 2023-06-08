@@ -50,6 +50,30 @@ export class ArticleService {
     return buildData;
   }
 
+  async getArticleFolowByParamsAndToken(
+    queryParams: IArticleQueryParamsRequered,
+    token: Token,
+  ): Promise<ArticleBuildResponseFeedDto> {
+    const currentUserId = this.user.getUserIdFromToken(token);
+
+    const [articles, articleCount] = await this.getArticleFollowWithCount(
+      queryParams,
+      currentUserId,
+    );
+
+    console.log('articles', articles);
+    console.log('articleCount', articleCount);
+
+    // const data = await this.getArticlesFeedWithFavoritesData(
+    //   articles,
+    //   currentUserId,
+    // );
+
+    // const buildData = this.buildArticlesFeedResponse(data, articleCount);
+    // return buildData;
+    return null;
+  }
+
   async createArticle(
     articleCreateDto: ArticleCreateDto,
     token: Token,
@@ -189,6 +213,18 @@ export class ArticleService {
   ): Promise<[ArticleBuildEntity[], number]> {
     return await Promise.all([
       await this.articleRepository.getArticleAllByParams(queryParams),
+      await this.articleRepository.countFeed(),
+    ]);
+  }
+  private async getArticleFollowWithCount(
+    queryParams: IArticleQueryParamsRequered,
+    userId: number,
+  ): Promise<[ArticleBuildEntity[], number]> {
+    return await Promise.all([
+      await this.articleRepository.getArticleFollowByParams(
+        queryParams,
+        userId,
+      ),
       await this.articleRepository.countFeed(),
     ]);
   }

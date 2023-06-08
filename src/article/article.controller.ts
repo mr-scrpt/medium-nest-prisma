@@ -45,6 +45,20 @@ export class ArticleController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('feed')
+  @ApiCreatedResponse({ type: ArticleBuildResponseFeedDto })
+  async getArticleFeed(
+    @Headers('Authorization') token: Token,
+    @Query() query: IArtilceQueryParamsOptional,
+  ): Promise<ArticleBuildResponseFeedDto> {
+    const params = parseQueryParams(query);
+    return await this.articleService.getArticleFolowByParamsAndToken(
+      params,
+      token,
+    );
+  }
+
+  @UseGuards(AuthGuard)
   @Post()
   @ApiBody({ type: ArticleRequestCreateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })

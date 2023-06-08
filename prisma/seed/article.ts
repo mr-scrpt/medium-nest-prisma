@@ -10,7 +10,7 @@ export const articleList: Array<Omit<Article, 'id'>> = [
     tagList: ['dragons', 'training'],
     createdAt: new Date(),
     updatedAt: new Date(),
-    favoritesCount: 0,
+    favoritesCount: 2,
     authorId: 1,
   },
   {
@@ -21,7 +21,7 @@ export const articleList: Array<Omit<Article, 'id'>> = [
     tagList: ['dragons', 'training'],
     createdAt: new Date(),
     updatedAt: new Date(),
-    favoritesCount: 0,
+    favoritesCount: 1,
     authorId: 2,
   },
   {
@@ -32,7 +32,18 @@ export const articleList: Array<Omit<Article, 'id'>> = [
     tagList: ['dragons', 'training'],
     createdAt: new Date(),
     updatedAt: new Date(),
-    favoritesCount: 0,
+    favoritesCount: 1,
     authorId: 1,
+  },
+  {
+    slug: 'how-to-train-your-dragon-4',
+    title: 'How to train your dragon 4',
+    description: 'So toothless',
+    body: 'It a dragon',
+    tagList: ['dragons', 'training'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    favoritesCount: 0,
+    authorId: 3,
   },
 ];
