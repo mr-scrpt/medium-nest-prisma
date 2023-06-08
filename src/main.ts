@@ -9,7 +9,8 @@ if (process.env.NODE_ENV || process.env.NODE_ENV === 'prod') {
 }
 async function bootstrap() {
   const APP_PORT = process.env.APP_PORT;
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
     .setTitle('NestJS Prisma')
@@ -17,7 +18,7 @@ async function bootstrap() {
     .setVersion('0.1')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('doc', app, document);
   app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(APP_PORT, () =>

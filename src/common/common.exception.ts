@@ -8,6 +8,11 @@ import { Response } from 'express';
 interface ErrorResponse {
   errors: Record<string, string[]>;
 }
+interface StandartErrorResponse {
+  statusCode: number;
+  message: string[];
+  error: string;
+}
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -17,20 +22,32 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
 
-    let message = exception.getResponse() as string | ErrorResponse;
-    console.log(message);
+    let message = exception.getResponse() as
+      | string
+      | ErrorResponse
+      | StandartErrorResponse;
+
     if (typeof message === 'string') {
       message = {
         errors: {
           body: [message || 'Internal server error'],
         },
       };
-    } else {
-      console.log('message', message);
+    }
+    if (typeof message === 'object' && 'errors' in message) {
+      // console.log('message', message);
       const errorArray = Object.values(message.errors).flat();
+
       message = {
         errors: {
           body: errorArray,
+        },
+      };
+    }
+    if (typeof message === 'object' && 'error' in message) {
+      message = {
+        errors: {
+          body: [message.error],
         },
       };
     }
