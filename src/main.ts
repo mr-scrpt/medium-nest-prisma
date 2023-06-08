@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { HttpExceptionFilter } from './common/common.exception';
 
 if (process.env.NODE_ENV || process.env.NODE_ENV === 'prod') {
   require('module-alias/register');
@@ -17,6 +18,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(APP_PORT, () =>
     console.log(`===>>>> Server is running on port ${APP_PORT}`),
