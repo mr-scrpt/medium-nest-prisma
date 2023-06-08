@@ -28,16 +28,6 @@ model User {
   following  UserToUser[]    @relation("UserToUserFollowing")
 }
 
-model UserToUser {
-  id          Int  @id @default(autoincrement())
-  follower    User @relation("UserToUserFollowing", fields: [followerId], references: [id])
-  followerId  Int
-  following   User @relation("UserToUserFollowed", fields: [followingId], references: [id])
-  followingId Int
-
-  @@unique([followerId, followingId])
-}
-
 model Article {
   id             Int             @id @default(autoincrement())
   slug           String          @unique
@@ -51,6 +41,16 @@ model Article {
   favoritedBy    UserToArticle[]
   author         User            @relation(fields: [authorId], references: [id])
   authorId       Int
+}
+
+model UserToUser {
+  id          Int  @id @default(autoincrement())
+  follower    User @relation("UserToUserFollowing", fields: [followerId], references: [id])
+  followerId  Int
+  following   User @relation("UserToUserFollowed", fields: [followingId], references: [id])
+  followingId Int
+
+  @@unique([followerId, followingId])
 }
 
 model UserToArticle {

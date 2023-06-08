@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
 import { tagList, userList, articleList, userToArticleList } from '.';
+import { userToUser } from './userToUser';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
@@ -32,6 +33,7 @@ async function main() {
   await execute(userList, 'user', 'email');
   await execute(articleList, 'article', 'slug');
   await execute(userToArticleList, 'userToArticle', 'id');
+  await execute(userToUser, 'userToUser', 'id');
 }
 // execute the main function
 main()
