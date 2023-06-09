@@ -5,6 +5,7 @@ import { ProfileResponseDto } from './dto/profileResponse.dto';
 import { UserService } from '@app/user/user.service';
 import { FollowService } from '@app/follow/follow.service';
 import { Token } from '@app/auth/iterface/auth.interface';
+import { ProfileDto } from './dto/profile.dto';
 
 @Injectable()
 export class ProfileService {
@@ -17,11 +18,12 @@ export class ProfileService {
     username: string,
     token: Token,
   ): Promise<ProfileBuildResponseDto> {
-    console.log('username ====>', username);
     const userCurrent = await this.userService.getUserByToken(token);
-    console.log('userCurrent ====>', userCurrent);
     const user = await this.checkAndGetProfile(username);
-    const isFollowing = await this.followService.isFollowing(userCurrent.id, 1);
+    const isFollowing = await this.followService.isFollowing(
+      userCurrent.id,
+      user.id,
+    );
     return this.buildProfileResponse({ ...user, following: isFollowing });
   }
 
@@ -47,10 +49,8 @@ export class ProfileService {
     return this.buildProfileResponse({ ...user, following: false });
   }
 
-  private async checkAndGetProfile(username: string): Promise<ProfileClearDto> {
-    // return await this.userService.checkAndGetUserByName(username);
+  private async checkAndGetProfile(username: string): Promise<ProfileDto> {
     const user = await this.userService.checkAndGetUserByName(username);
-    console.log('user in profile.service.ts', user);
     return user;
   }
 

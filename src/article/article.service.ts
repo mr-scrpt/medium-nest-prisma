@@ -75,6 +75,7 @@ export class ArticleService {
     articleCreateDto: ArticleRequestCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
+    console.log('articleCreateDto', articleCreateDto);
     const { article } = articleCreateDto;
     const slug = this.common.slugGenerator(article.title);
 

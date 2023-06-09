@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 interface ErrorResponse {
-  errors: Record<string, string[]>;
+  errors: string | string[];
 }
 interface StandartErrorResponse {
   statusCode: number;
@@ -17,7 +17,7 @@ interface StandartErrorResponse {
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    console.log('HttpExceptionFilter');
+    // console.log('in HttpExceptionFilter');
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
@@ -26,31 +26,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
       | string
       | ErrorResponse
       | StandartErrorResponse;
-
     console.log('message', message);
 
     if (typeof message === 'string') {
+      console.log('is string', message);
+      // message = {
+      //   errors: {
+      //     body: [message || 'Internal server error'],
+      //   },
+      // };
       message = {
-        errors: {
-          body: [message || 'Internal server error'],
-        },
+        errors: message || 'Internal server error',
       };
-    }
-    if (typeof message === 'object' && 'errors' in message) {
+    } else if (typeof message === 'object' && 'errors' in message) {
       // console.log('message', message);
-      const errorArray = Object.values(message.errors).flat();
+      const [errorArray] = Object.values(message.errors).flat();
+      // console.log('errorArray', errorArray);
 
       message = {
-        errors: {
-          body: errorArray,
-        },
+        errors: errorArray,
       };
-    }
-    if (typeof message === 'object' && 'error' in message) {
+    } else if (typeof message === 'object' && 'error' in message) {
       message = {
-        errors: {
-          body: [message.error],
-        },
+        errors: [message.error],
       };
     }
 

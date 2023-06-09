@@ -9,16 +9,18 @@ import { validate, ValidationError } from 'class-validator';
 
 export class CustomValidationPipe implements PipeTransform {
   async transform(value: any, metadata: ArgumentMetadata) {
-    console.log('value', value);
-    console.log('metadata', metadata);
-    return value;
+    if (value === null || value === undefined) {
+      return value; // Пропускаем null и undefined значения без валидации
+    }
+    if (typeof value === 'string') {
+      console.log('value', value);
+      return value.trim(); // Удаляем пробелы по краям строки
+    }
+
     const object = plainToClass(metadata.metatype, value);
     const errors = await validate(object);
 
-    // console.log('object', object);
-    // console.log('errors', errors);
-
-    if (!errors.length) {
+    if (errors.length === 0) {
       return value;
     }
 
@@ -31,9 +33,17 @@ export class CustomValidationPipe implements PipeTransform {
   }
 
   buildError(errors: ValidationError[]) {
-    return errors.reduce((acc, error) => {
-      acc[error.property] = Object.values(error.constraints);
-      return acc;
-    }, {});
+    const result = {};
+
+    errors.forEach((error) => {
+      if (error.children && error.children.length > 0) {
+        result[error.property] = this.buildError(error.children);
+      } else {
+        result[error.property] = Object.values(error.constraints);
+      }
+    });
+    console.log(result);
+
+    return result;
   }
 }
