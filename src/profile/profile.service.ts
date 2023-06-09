@@ -13,9 +13,16 @@ export class ProfileService {
     private readonly followService: FollowService,
   ) {}
 
-  async getProfile(username: string): Promise<ProfileBuildResponseDto> {
+  async getProfile(
+    username: string,
+    token: Token,
+  ): Promise<ProfileBuildResponseDto> {
+    console.log('username ====>', username);
+    const userCurrent = await this.userService.getUserByToken(token);
+    console.log('userCurrent ====>', userCurrent);
     const user = await this.checkAndGetProfile(username);
-    return this.buildProfileResponse({ ...user, following: false });
+    const isFollowing = await this.followService.isFollowing(userCurrent.id, 1);
+    return this.buildProfileResponse({ ...user, following: isFollowing });
   }
 
   async followProfile(
@@ -41,7 +48,10 @@ export class ProfileService {
   }
 
   private async checkAndGetProfile(username: string): Promise<ProfileClearDto> {
-    return await this.userService.checkAndGetUserByName(username);
+    // return await this.userService.checkAndGetUserByName(username);
+    const user = await this.userService.checkAndGetUserByName(username);
+    console.log('user in profile.service.ts', user);
+    return user;
   }
 
   private buildProfileResponse(

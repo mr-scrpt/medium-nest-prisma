@@ -23,9 +23,10 @@ export class ProfileController {
   @UsePipes(new CustomValidationPipe())
   async getProfile(
     @Param('username') username: string,
+    @Headers('Authorization') auth: Token,
   ): Promise<ProfileBuildResponseDto> {
     console.log('username in controller', username);
-    return await this.profileService.getProfile(username);
+    return await this.profileService.getProfile(username, auth);
   }
 
   @Post(':username/follow')

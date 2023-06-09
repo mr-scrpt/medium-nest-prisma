@@ -7,11 +7,18 @@ import { FollowRepository } from './follow.repository';
 export class FollowService {
   constructor(private readonly followRepository: FollowRepository) {}
 
-  async checkIsFollowing(currentUserId: number, userId: number): Promise<void> {
+  async isFollowing(currentUserId: number, userId: number): Promise<boolean> {
+    console.log('currentUserId', currentUserId);
+    console.log('userId', userId);
     const follow = await this.followRepository.getFollowData(
       currentUserId,
       userId,
     );
+    return !!follow;
+  }
+
+  async checkIsFollowing(currentUserId: number, userId: number): Promise<void> {
+    const follow = await this.isFollowing(currentUserId, userId);
     if (follow) {
       throw new HttpException('User already followed', HttpStatus.BAD_REQUEST);
     }
@@ -21,10 +28,7 @@ export class FollowService {
     currentUserId: number,
     userId: number,
   ): Promise<void> {
-    const follow = await this.followRepository.getFollowData(
-      currentUserId,
-      userId,
-    );
+    const follow = await this.isFollowing(currentUserId, userId);
     if (!follow) {
       throw new HttpException(
         'User already unfollowed',
