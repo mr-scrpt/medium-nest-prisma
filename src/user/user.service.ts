@@ -21,14 +21,15 @@ export class UserService {
   async createUser(
     userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
-    const { username, email, password } = userCreateDto;
+    const userClean = this.prepareUserCreateObject(userCreateDto);
+    await this.checkUniqueEmailAndName(userClean.email, userClean.username);
 
-    this.checkUniqueEmailAndName(email, username);
-
-    const passwordHashed = await this.authService.hashPassword(password);
+    const passwordHashed = await this.authService.hashPassword(
+      userClean.password,
+    );
 
     const data = {
-      ...userCreateDto,
+      ...userClean,
       password: passwordHashed,
     };
 
@@ -38,19 +39,15 @@ export class UserService {
   }
 
   async updateUser(
-    updateUserDto: UserUpdateDto,
+    userUpdateDto: UserUpdateDto,
     token: Token,
   ): Promise<UserBuildResponseDto> {
+    const userClean = this.prepareUserUpdateObject(userUpdateDto);
     const { id, password } = await this.checkAndGetUserByToken(token);
 
-    this.validateUpdateUserDto(updateUserDto);
+    this.validateUpdateUserDto(userClean);
 
-    const {
-      password: passwordNew,
-      passwordOld,
-      email,
-      username,
-    } = updateUserDto;
+    const { password: passwordNew, passwordOld, email, username } = userClean;
 
     await this.checkUniqueEmailAndName(email, username);
 
@@ -60,9 +57,9 @@ export class UserService {
       password,
     );
 
-    delete updateUserDto.passwordOld;
-    updateUserDto.password = hashPassword;
-    const userUpdate = this.generateStructureUpdateUser(updateUserDto);
+    delete userClean.passwordOld;
+    userClean.password = hashPassword;
+    const userUpdate = this.generateStructureUpdateUser(userClean);
 
     const userUpdateResponse = await this.userRepository.updateUser(
       id,
@@ -233,6 +230,24 @@ export class UserService {
       Object.entries(userUpdateDto).filter(([_, value]) => value !== ''),
     );
   }
+  prepareUserCreateObject(userUpdateDto: UserCreateDto): UserCreateDto {
+    const { username, email, password } = userUpdateDto;
+
+    return { username, email, password };
+  }
+  prepareUserUpdateObject(userUpdateDto: UserUpdateDto): UserUpdateDto {
+    const { username, email, password, passwordOld, bio, image } =
+      userUpdateDto;
+
+    return { username, email, password, passwordOld, bio, image };
+  }
+
+  // prepareUserCreateObject(userUpdateDto: UserUpdateDto): UserUpdateDto {
+  //   const { username, email, password, passwordOld, bio, image } =
+  //     userUpdateDto;
+
+  //   return { username, email, password, passwordOld, bio, image };
+  // }
 
   /***/
   buildUserResponse(user: UserEntity): UserBuildResponseDto {

@@ -10,7 +10,6 @@ import {
   Param,
   Put,
   Query,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ArticleService } from '@app/article/article.service';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
@@ -96,7 +95,7 @@ export class ArticleController {
   @Put(':slug')
   @ApiBody({ type: ArticleRequestUpdateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async updateArticleBySlug(
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,

@@ -152,6 +152,8 @@ export class ArticleRepository {
     slug: string,
     articleUpdateDto: ArticleUpdateDto,
   ): Promise<ArticleBuildEntity> {
+    console.log('slug', slug);
+    console.log('dto article', articleUpdateDto);
     const includeParams = {
       author: authorBaseSelect,
       favoritedBy: favoritedBaseSelect,
@@ -162,6 +164,7 @@ export class ArticleRepository {
     };
 
     const include = this.prepareIncludeParams(includeParams);
+    console.log('before updat');
     const articleUpdated = await this.prisma.article.update({
       where: {
         slug,
@@ -169,6 +172,7 @@ export class ArticleRepository {
       data,
       include,
     });
+    console.log('after upd', articleUpdated);
     return articleUpdated;
   }
 

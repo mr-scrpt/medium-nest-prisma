@@ -33,7 +33,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (typeof message === 'string') {
       responseMessage = {
-        errors: { validate: [message] },
+        errors: { 'Validate error:': [message] },
       };
     } else if (typeof message === 'object' && 'errors' in message) {
       responseMessage = message as ResponseErrorInterface;

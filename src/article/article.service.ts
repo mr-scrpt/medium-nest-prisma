@@ -10,7 +10,6 @@ import { ArticleCreateDto } from './dto/articleCreate.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticleBuildEntity } from './entity/articleBuild.entity';
 import { ArticleResponseDto } from './dto/articleResponse.dto';
-import { ArticleRequestCreateDto } from './dto/articleRequestCreate.dto';
 
 @Injectable()
 export class ArticleService {
@@ -75,15 +74,15 @@ export class ArticleService {
     articleCreateDto: ArticleCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
-    console.log('articleCreateDto', articleCreateDto);
-    const slug = this.common.slugGenerator(articleCreateDto.title);
+    const articleClean = this.prepareArticleCreateObject(articleCreateDto);
+    const slug = this.common.slugGenerator(articleClean.title);
 
     await this.checkUniqueArticleBySlug(slug);
 
     const currentUserId = this.user.getUserIdFromToken(token);
 
     const articleCreated = await this.createAndCheckArticle(
-      articleCreateDto,
+      articleClean,
       slug,
       currentUserId,
     );
@@ -110,16 +109,17 @@ export class ArticleService {
     articleUpdateDto: ArticleUpdateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
+    const articleClean = this.prepareArticleUpdateObject(articleUpdateDto);
     const currentUserId = this.user.getUserIdFromToken(token);
     const article = await this.checkAndGetArticleBySlug(slug);
 
-    const slugNew = this.checkAndGenerateSlug(slug, articleUpdateDto.title);
+    const slugNew = this.checkAndGenerateSlug(slug, articleClean.title);
     await this.checkUniqueSlug(slugNew);
 
     this.checkArticleAuthor(article, currentUserId);
 
     const dataUpdate = {
-      ...articleUpdateDto,
+      ...articleClean,
       slug: slugNew,
     };
 
@@ -400,6 +400,19 @@ export class ArticleService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+  prepareArticleUpdateObject(
+    articleUpdateDto: ArticleUpdateDto,
+  ): ArticleUpdateDto {
+    const { title, body, description, tagList } = articleUpdateDto;
+    return { title, body, description, tagList };
+  }
+
+  prepareArticleCreateObject(
+    articleCreateDto: ArticleCreateDto,
+  ): ArticleCreateDto {
+    const { title, body, description, tagList } = articleCreateDto;
+    return { title, body, description, tagList };
   }
 
   private buildArticleResponse(
