@@ -8,7 +8,7 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { UserRequestCreateDto } from '@app/user/dto/swagger/userRequestCreate.dto';
+import { UserRequestCreateDto } from '@app/user/dto/userRequestCreate.dto';
 import {
   ApiBody,
   ApiTags,
@@ -19,10 +19,10 @@ import { UserService } from '@app/user/user.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
-import { UserRequestLoginDto } from '@app/user/dto/swagger/userRequestLogin.dto';
+import { UserRequestLoginDto } from '@app/user/dto/userRequestLogin.dto';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
-import { UserRequestUpdateDto } from './dto/swagger/userRequestUpdate.dto';
+import { UserRequestUpdateDto } from './dto/userRequestUpdate.dto';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { CustomValidationPipe } from '@app/common/common.pipe';
 

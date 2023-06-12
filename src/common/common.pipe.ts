@@ -13,7 +13,6 @@ export class CustomValidationPipe implements PipeTransform {
       return value; // Пропускаем null и undefined значения без валидации
     }
     if (typeof value === 'string') {
-      console.log('value', value);
       return value.trim(); // Удаляем пробелы по краям строки
     }
 
@@ -42,7 +41,6 @@ export class CustomValidationPipe implements PipeTransform {
         result[error.property] = Object.values(error.constraints);
       }
     });
-    console.log(result);
 
     return result;
   }

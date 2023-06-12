@@ -72,19 +72,18 @@ export class ArticleService {
   }
 
   async createArticle(
-    articleCreateDto: ArticleRequestCreateDto,
+    articleCreateDto: ArticleCreateDto,
     token: Token,
   ): Promise<ArticleBuildResponseDto> {
     console.log('articleCreateDto', articleCreateDto);
-    const { article } = articleCreateDto;
-    const slug = this.common.slugGenerator(article.title);
+    const slug = this.common.slugGenerator(articleCreateDto.title);
 
     await this.checkUniqueArticleBySlug(slug);
 
     const currentUserId = this.user.getUserIdFromToken(token);
 
     const articleCreated = await this.createAndCheckArticle(
-      article,
+      articleCreateDto,
       slug,
       currentUserId,
     );

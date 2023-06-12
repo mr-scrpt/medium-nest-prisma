@@ -5,6 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { ResponseErrorInterface } from './common.interface';
 interface ErrorResponse {
   errors: string | string[];
 }
@@ -17,41 +18,31 @@ interface StandartErrorResponse {
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    // console.log('in HttpExceptionFilter');
+    console.log('in HttpExceptionFilter');
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
 
-    let message = exception.getResponse() as
+    const message = exception.getResponse() as
       | string
       | ErrorResponse
-      | StandartErrorResponse;
-    console.log('message', message);
+      | StandartErrorResponse
+      | ResponseErrorInterface;
+
+    let responseMessage: ResponseErrorInterface;
 
     if (typeof message === 'string') {
-      console.log('is string', message);
-      // message = {
-      //   errors: {
-      //     body: [message || 'Internal server error'],
-      //   },
-      // };
-      message = {
-        errors: message || 'Internal server error',
+      responseMessage = {
+        errors: { validate: [message] },
       };
     } else if (typeof message === 'object' && 'errors' in message) {
-      // console.log('message', message);
-      const [errorArray] = Object.values(message.errors).flat();
-      // console.log('errorArray', errorArray);
-
-      message = {
-        errors: errorArray,
-      };
+      responseMessage = message as ResponseErrorInterface;
     } else if (typeof message === 'object' && 'error' in message) {
-      message = {
-        errors: [message.error],
+      responseMessage = {
+        errors: { errorField: [message.error] },
       };
     }
 
-    response.status(status).json(message);
+    response.status(status).json(responseMessage);
   }
 }

@@ -24,6 +24,7 @@ import { ArticleBuildResponseFeedDto } from './dto/articleBuildResponseFeed.dto'
 import { CustomValidationPipe } from '@app/common/common.pipe';
 import { ArticleRequestCreateDto } from './dto/articleRequestCreate.dto';
 import { ArticleRequestUpdateDto } from './dto/articleRequestUpdate.dto';
+import { ArticleCreateDto } from './dto/articleCreate.dto';
 
 @ApiTags('articles')
 @Controller('articles')
@@ -63,10 +64,10 @@ export class ArticleController {
   @Post()
   @ApiBody({ type: ArticleRequestCreateDto })
   @ApiCreatedResponse({ type: ArticleBuildResponseDto })
-  @UsePipes(CustomValidationPipe)
+  @UsePipes(new CustomValidationPipe())
   async createArticle(
     @Headers('Authorization') auth: string | undefined,
-    @Body() articleCreateDto: ArticleRequestCreateDto,
+    @Body('article') articleCreateDto: ArticleCreateDto,
   ): Promise<ArticleBuildResponseDto> {
     return await this.articleService.createArticle(articleCreateDto, auth);
   }
