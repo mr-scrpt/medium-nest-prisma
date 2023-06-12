@@ -11,8 +11,9 @@ datasource db {
 }
 
 model Tag {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id       Int            @id @default(autoincrement())
+  name     String         @unique
+  articles ArticleToTag[]
 }
 
 model User {
@@ -34,7 +35,7 @@ model Article {
   title          String
   description    String          @default("")
   body           String          @default("")
-  tagList        String[]
+  tagList        ArticleToTag[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   favoritesCount Int             @default(0)
@@ -61,4 +62,14 @@ model UserToArticle {
   articleId Int
 
   @@unique([userId, articleId])
+}
+
+model ArticleToTag {
+  id        Int     @id @default(autoincrement())
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int
+  tag       Tag     @relation(fields: [tagId], references: [id])
+  tagId     Int
+
+  @@unique([articleId, tagId])
 }
