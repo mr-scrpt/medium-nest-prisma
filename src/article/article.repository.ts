@@ -260,19 +260,49 @@ export class ArticleRepository {
         data: {
           ...articleToDBDto,
         },
-      });
-
-      await tx.articleToTag.deleteMany({
-        where: {
-          articleId: article.id,
+        include: {
+          tagList: true, // Включаем связанную таблицу tagList
         },
       });
 
+      const existingTagIds = article.tagList.map((tag) => tag.id); // Получаем текущие id тегов статьи
+
+      // Находим новые теги, которые не присутствуют в текущем списке тегов
+      const newTags = tagList.filter((tag) => !existingTagIds.includes(tag.id));
+
+      // Удаляем связи articleToTag для тегов, которые были удалены из списка тегов статьи
+      await tx.articleToTag.deleteMany({
+        where: {
+          articleId: article.id,
+          tagId: {
+            notIn: existingTagIds,
+          },
+        },
+      });
+
+      // Создаем новые связи articleToTag только для новых тегов
       await tx.articleToTag.createMany({
-        data: tagList.map((tag) => ({
+        data: newTags.map((tag) => ({
           articleId: article.id,
           tagId: tag.id,
         })),
+      });
+
+      // Удаляем теги, которые не используются больше в каких-либо статьях
+      const unusedTags = await tx.tag.findMany({
+        where: {
+          articles: {
+            none: {}, // Ни одна статья не связана с тегом
+          },
+        },
+      });
+
+      await tx.tag.deleteMany({
+        where: {
+          id: {
+            in: unusedTags.map((tag) => tag.id),
+          },
+        },
       });
 
       return article;
