@@ -280,6 +280,7 @@ export class ArticleService {
     try {
       await this.articleRepository.deleteArticleBySlug(slug);
     } catch (error) {
+      console.log(error);
       throw new HttpException(
         'Article not deleted',
         HttpStatus.INTERNAL_SERVER_ERROR,

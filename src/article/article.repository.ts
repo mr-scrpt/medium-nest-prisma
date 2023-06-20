@@ -250,19 +250,17 @@ export class ArticleRepository {
     slug: string,
     driver: Tx = this.prisma,
   ): Promise<PayloadInclude> {
-    const articleUpdated = await driver.article.update({
+    const articleUpdated: PayloadInclude = await driver.article.update({
       where: {
         slug: slug,
       },
       data: {
         ...articleToDBDto,
       },
-      include: {
-        tagList: true, // Включаем связанную таблицу tagList
-      },
+      include,
     });
 
-    return articleUpdated as PayloadInclude;
+    return articleUpdated;
   }
 
   async deleteNotExistArticleToTag(
@@ -290,6 +288,17 @@ export class ArticleRepository {
         articleId: articleId,
         tagId: tag.id,
       })),
+    });
+  }
+
+  async deleteArticleToTag(
+    articleId: number,
+    driver: Tx = this.prisma,
+  ): Promise<void> {
+    await driver.articleToTag.deleteMany({
+      where: {
+        articleId: articleId,
+      },
     });
   }
 
@@ -341,15 +350,33 @@ export class ArticleRepository {
   }
 
   async deleteArticleBySlug(slug: string): Promise<void> {
-    await this.prisma.article.delete({
-      where: {
-        slug,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const article = await tx.article.findUnique({
+        where: {
+          slug,
+        },
+        include,
+      });
+
+      const existingTagIds = article.tagList.map((tag) => tag.id); // Получаем текущие id тегов статьи
+
+      await this.deleteNotExistArticleToTag(article.id, existingTagIds, tx);
+
+      await tx.article.delete({
+        where: {
+          slug,
+        },
+      });
+
+      // // Создаем новые связи articleToTag только для новых тегов
+      await this.deleteArticleToTag(article.id, tx);
+
+      // Удаляем теги, которые не используются больше в каких-либо статьях
+      await this.deleteUnuseTags(tx);
     });
   }
 
   async countFeed(queryParams: IArticleQueryParamsRequered): Promise<number> {
-    // const params = this.prepareQueryParams(queryParams);
     const where = this.prepareWhereParams(queryParams);
     const count = await this.prisma.article.count({ where });
     return count;
