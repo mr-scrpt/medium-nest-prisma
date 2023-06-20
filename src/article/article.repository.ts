@@ -7,7 +7,7 @@ import { TagService } from '@app/tag/tag.service';
 import { ArticleToDBDto } from '@app/article/dto/db/articleToDB.dto';
 import { ArticleWithRelationEntity } from './entity/aticleWithRelation.entity';
 import { ArticleEntity } from './entity/article.entity';
-import { Tx } from './article.type';
+import { PayloadInclude, Tx } from './article.type';
 import { TagEntity } from '@app/tag/entity/tag.entity';
 import { IArticleQueryParamsRequered } from './article.interface';
 
@@ -245,6 +245,72 @@ export class ArticleRepository {
     return articleCreated;
   }
 
+  async updateArticle(
+    articleToDBDto: ArticleToDBDto,
+    slug: string,
+    driver: Tx = this.prisma,
+  ): Promise<PayloadInclude> {
+    const articleUpdated = await driver.article.update({
+      where: {
+        slug: slug,
+      },
+      data: {
+        ...articleToDBDto,
+      },
+      include: {
+        tagList: true, // Включаем связанную таблицу tagList
+      },
+    });
+
+    return articleUpdated as PayloadInclude;
+  }
+
+  async deleteNotExistArticleToTag(
+    articleId: number,
+    existingTagIds: number[],
+    driver: Tx = this.prisma,
+  ): Promise<void> {
+    await driver.articleToTag.deleteMany({
+      where: {
+        articleId: articleId,
+        tagId: {
+          notIn: existingTagIds,
+        },
+      },
+    });
+  }
+
+  async createNewArticleToTag(
+    articleId: number,
+    newTags: TagEntity[],
+    driver: Tx = this.prisma,
+  ): Promise<void> {
+    await driver.articleToTag.createMany({
+      data: newTags.map((tag) => ({
+        articleId: articleId,
+        tagId: tag.id,
+      })),
+    });
+  }
+
+  async deleteUnuseTags(driver: Tx = this.prisma): Promise<void> {
+    const unusedTags = await driver.tag.findMany({
+      where: {
+        articles: {
+          none: {}, // Ни одна статья не связана с тегом
+        },
+      },
+    });
+
+    await driver.tag.deleteMany({
+      where: {
+        id: {
+          in: unusedTags.map((tag) => tag.id),
+        },
+      },
+    });
+  }
+
   async updateArticleTransaction(
     articleToDBDto: ArticleToDBDto,
     tagName: string[],
@@ -253,57 +319,20 @@ export class ArticleRepository {
     const articleUpdated = await this.prisma.$transaction(async (tx) => {
       const tagList = await this.tagCreateAndPrepareList(tx, tagName);
 
-      const article = await tx.article.update({
-        where: {
-          slug: slug,
-        },
-        data: {
-          ...articleToDBDto,
-        },
-        include: {
-          tagList: true, // Включаем связанную таблицу tagList
-        },
-      });
+      const article = await this.updateArticle(articleToDBDto, slug, tx);
 
       const existingTagIds = article.tagList.map((tag) => tag.id); // Получаем текущие id тегов статьи
+
+      await this.deleteNotExistArticleToTag(article.id, existingTagIds, tx);
 
       // Находим новые теги, которые не присутствуют в текущем списке тегов
       const newTags = tagList.filter((tag) => !existingTagIds.includes(tag.id));
 
-      // Удаляем связи articleToTag для тегов, которые были удалены из списка тегов статьи
-      await tx.articleToTag.deleteMany({
-        where: {
-          articleId: article.id,
-          tagId: {
-            notIn: existingTagIds,
-          },
-        },
-      });
-
-      // Создаем новые связи articleToTag только для новых тегов
-      await tx.articleToTag.createMany({
-        data: newTags.map((tag) => ({
-          articleId: article.id,
-          tagId: tag.id,
-        })),
-      });
+      // // Создаем новые связи articleToTag только для новых тегов
+      await this.createNewArticleToTag(article.id, newTags, tx);
 
       // Удаляем теги, которые не используются больше в каких-либо статьях
-      const unusedTags = await tx.tag.findMany({
-        where: {
-          articles: {
-            none: {}, // Ни одна статья не связана с тегом
-          },
-        },
-      });
-
-      await tx.tag.deleteMany({
-        where: {
-          id: {
-            in: unusedTags.map((tag) => tag.id),
-          },
-        },
-      });
+      await this.deleteUnuseTags(tx);
 
       return article;
     });
