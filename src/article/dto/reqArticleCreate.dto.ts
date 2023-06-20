@@ -5,10 +5,10 @@ import {
   IsObject,
   ValidateNested,
 } from 'class-validator';
-import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 import { Type } from 'class-transformer';
+import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 
-export class ArticleRequestCreateDto {
+export class ReqArticleCreateDto {
   @ApiProperty({ type: ArticleCreateDto })
   @IsDefined()
   @IsNotEmptyObject()

@@ -3,7 +3,7 @@ import {
   IArtilceQueryParamsOptional,
   SortByArticleEnum,
   SortDirectionEnum,
-} from '@app/article/interface/query.interface';
+} from '@app/article/article.interface';
 
 const DEFAULT_LIMIT = 20;
 const DEFAULT_OFFSET = 0;

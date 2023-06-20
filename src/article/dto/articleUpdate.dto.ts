@@ -1,32 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ArticleUpdateDto {
   @ApiProperty({
     example: 'Title Article',
-    description: 'Title to update article',
+    description: 'Title to new article',
   })
   @IsOptional()
-  title: string;
+  @IsString()
+  title?: string;
 
   @ApiProperty({
     example: 'Description Article',
-    description: 'Description to update article',
+    description: 'Description to new article',
   })
   @IsOptional()
-  description: string;
+  @IsString()
+  description?: string;
 
   @ApiProperty({
     example: 'Body Article',
-    description: 'Body to update article',
+    description: 'Body to new article',
   })
   @IsOptional()
-  body: string;
+  @IsString()
+  body?: string;
 
   @ApiProperty({
     example: ['tag1', 'tag2'],
-    description: 'Tags to update article',
+    description: 'Tags to new article',
   })
+  // @ArrayNotEmpty()
   @IsOptional()
+  @IsString({ each: true })
   tagList?: string[];
 }

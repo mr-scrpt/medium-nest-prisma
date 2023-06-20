@@ -1,4 +1,4 @@
-import { Article, UserToArticle } from '@prisma/client';
+import { Article, ArticleToTag, UserToArticle } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserAuthorEntity } from '@app/user/entity/userAuthor.entity';
 
@@ -19,7 +19,7 @@ export class ArticleBuildEntity implements Omit<Article, 'authorId'> {
   body: string;
 
   @ApiProperty({ type: 'string', isArray: true })
-  tagList: string[];
+  tagList?: ArticleToTag[];
 
   @ApiProperty({ type: 'string' })
   createdAt: Date;

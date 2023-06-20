@@ -1,37 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { IArticleQueryParamsRequered } from '@app/article/interface/query.interface';
-import {
-  authorBaseSelect,
-  favoritedBaseSelect,
-} from '@app/article/article.select';
-import { Prisma } from '@prisma/client';
-import { ArticleCreateDto } from './dto/articleCreate.dto';
-import { ArticleUpdateDto } from './dto/articleUpdate.dto';
-import { ArticleBuildEntity } from './entity/articleBuild.entity';
+import { PrismaService } from '@app/prisma/prisma.service';
+import { include } from '@app/article/article.select';
+import { Prisma, Tag } from '@prisma/client';
 import { CommonService } from '@app/common/common.service';
+import { TagService } from '@app/tag/tag.service';
+import { ArticleToDBDto } from '@app/article/dto/db/articleToDB.dto';
+import { ArticleWithRelationEntity } from './entity/aticleWithRelation.entity';
+import { ArticleEntity } from './entity/article.entity';
+import { Tx } from './article.type';
+import { TagEntity } from '@app/tag/entity/tag.entity';
+import { IArticleQueryParamsRequered } from './article.interface';
 
 @Injectable()
 export class ArticleRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly common: CommonService,
+    private readonly tag: TagService,
   ) {}
 
   async getArticleAllByParams(
     queryParams: IArticleQueryParamsRequered,
-    // currentUserId: number,
-  ): Promise<ArticleBuildEntity[]> {
+  ): Promise<ArticleWithRelationEntity[]> {
     const params = this.prepareQueryParams(queryParams);
     const where = this.prepareWhereParams(queryParams);
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
 
-    console.log('where', where);
-
-    const include = this.prepareIncludeParams(includeParams);
     const articles = await this.prisma.article.findMany({
       ...params,
       where,
@@ -44,20 +37,15 @@ export class ArticleRepository {
   async getArticleFollowByParams(
     queryParams: IArticleQueryParamsRequered,
     currentUserId: number,
-  ): Promise<ArticleBuildEntity[]> {
+  ): Promise<ArticleWithRelationEntity[]> {
     const params = this.prepareQueryParams(queryParams);
     const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
     const where: Prisma.ArticleWhereInput = {
       authorId: {
         in: followAuthorsIds,
       },
     };
 
-    const include = this.prepareIncludeParams(includeParams);
     const articles = await this.prisma.article.findMany({
       ...params,
       where,
@@ -65,19 +53,6 @@ export class ArticleRepository {
     });
 
     return articles;
-  }
-
-  async countFeedFollow(currentUserId: number): Promise<number> {
-    const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
-    const where: Prisma.ArticleWhereInput = {
-      authorId: {
-        in: followAuthorsIds,
-      },
-    };
-
-    return await this.prisma.article.count({
-      where,
-    });
   }
 
   async getFollowAuthorsIds(currentUserId: number): Promise<number[]> {
@@ -94,50 +69,216 @@ export class ArticleRepository {
     return followAuthorsIds;
   }
 
-  async getArticleBySlug(slug: string): Promise<ArticleBuildEntity | null> {
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
-
-    const include = this.prepareIncludeParams(includeParams);
+  async getArticleBySlug(slug: string): Promise<ArticleWithRelationEntity> {
     const article = await this.prisma.article.findUnique({
       where: {
         slug,
       },
-
       include,
     });
 
     if (!article) {
       return null;
     }
-
-    const articleSerialize = this.common.exclude(article, ['authorId']);
-    return articleSerialize;
+    return article;
   }
 
-  async createArticle(
-    articleCreateDto: ArticleCreateDto,
+  async addArticleToFavorites(
     slug: string,
     currentUserId: number,
-  ): Promise<ArticleBuildEntity> {
-    const data = {
-      authorId: currentUserId,
-      slug,
-      ...articleCreateDto,
-    };
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
-    const include = this.prepareIncludeParams(includeParams);
+  ): Promise<ArticleWithRelationEntity> {
+    const articleToFavorite = await this.prisma.$transaction(async (tx: Tx) => {
+      const article = await tx.article.findUnique({
+        where: {
+          slug,
+        },
+        include: {
+          favoritedBy: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
 
-    const articleCreated = await this.prisma.article.create({
-      data,
-      include,
+      if (!article) {
+        return null;
+      }
+
+      const isFavorite = article.favoritedBy.some(
+        (favorite) => favorite.userId === currentUserId,
+      );
+
+      if (isFavorite) {
+        return null;
+      }
+
+      const articleUpdated = await tx.article.update({
+        where: {
+          slug,
+        },
+        data: {
+          favoritedBy: {
+            create: {
+              userId: currentUserId,
+            },
+          },
+          favoritesCount: {
+            increment: 1,
+          },
+        },
+        include,
+      });
+
+      return articleUpdated;
     });
+
+    return articleToFavorite;
+  }
+
+  async removeArticleFromFavorites(
+    slug: string,
+    currentUserId: number,
+  ): Promise<ArticleWithRelationEntity> {
+    const articleToRemove = await this.prisma.$transaction(async (tx: Tx) => {
+      const article = await tx.article.findUnique({
+        where: {
+          slug,
+        },
+        include: {
+          favoritedBy: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      if (!article) {
+        return null;
+      }
+
+      const isFavorite = article.favoritedBy.some(
+        (favorite) => favorite.userId === currentUserId,
+      );
+
+      if (!isFavorite) {
+        return null;
+      }
+
+      const articleUpdated = await tx.article.update({
+        where: {
+          slug,
+        },
+        data: {
+          favoritedBy: {
+            delete: {
+              userId_articleId: {
+                userId: currentUserId,
+                articleId: article.id,
+              },
+            },
+          },
+          favoritesCount: {
+            decrement: 1,
+          },
+        },
+        include,
+      });
+
+      return articleUpdated;
+    });
+
+    return articleToRemove;
+  }
+
+  async tagCreateAndPrepareList(
+    tx: Tx,
+    tagName: string[],
+  ): Promise<TagEntity[]> {
+    const tagPromises = tagName.map(async (tag) => {
+      if (tag === '') {
+        return null; // Пропускаем пустую строку
+      }
+      const existingTag = await tx.tag.findUnique({
+        where: { name: tag },
+      });
+
+      if (existingTag) {
+        return existingTag; // Используем уже существующий тег
+      } else {
+        // Создание нового тега
+        const createdTag = await tx.tag.create({ data: { name: tag } });
+        return createdTag;
+      }
+    });
+    return await Promise.all(tagPromises);
+  }
+
+  async createArticleTransaction(
+    articleToDBDto: ArticleToDBDto,
+    tagName: string[],
+  ): Promise<ArticleEntity> {
+    const articleCreated = await this.prisma.$transaction(async (tx) => {
+      const tagList = await this.tagCreateAndPrepareList(tx, tagName);
+
+      const article = await tx.article.create({
+        data: {
+          authorId: articleToDBDto.authorId,
+          slug: articleToDBDto.slug,
+          title: articleToDBDto.title,
+          description: articleToDBDto.description,
+          body: articleToDBDto.body,
+        },
+      });
+
+      await tx.articleToTag.createMany({
+        data: tagList.map((tag) => ({
+          articleId: article.id,
+          tagId: tag.id,
+        })),
+      });
+
+      return article;
+    });
+
     return articleCreated;
+  }
+
+  async updateArticleTransaction(
+    articleToDBDto: ArticleToDBDto,
+    tagName: string[],
+    slug: string,
+  ): Promise<ArticleEntity> {
+    const articleUpdated = await this.prisma.$transaction(async (tx) => {
+      const tagList = await this.tagCreateAndPrepareList(tx, tagName);
+
+      const article = await tx.article.update({
+        where: {
+          slug: slug,
+        },
+        data: {
+          ...articleToDBDto,
+        },
+      });
+
+      await tx.articleToTag.deleteMany({
+        where: {
+          articleId: article.id,
+        },
+      });
+
+      await tx.articleToTag.createMany({
+        data: tagList.map((tag) => ({
+          articleId: article.id,
+          tagId: tag.id,
+        })),
+      });
+
+      return article;
+    });
+
+    return articleUpdated;
   }
 
   async deleteArticleBySlug(slug: string): Promise<void> {
@@ -148,164 +289,40 @@ export class ArticleRepository {
     });
   }
 
-  async updateArticleBySlug(
-    slug: string,
-    articleUpdateDto: ArticleUpdateDto,
-  ): Promise<ArticleBuildEntity> {
-    console.log('slug', slug);
-    console.log('dto article', articleUpdateDto);
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
-
-    const data = {
-      ...articleUpdateDto,
-    };
-
-    const include = this.prepareIncludeParams(includeParams);
-    console.log('before updat');
-    const articleUpdated = await this.prisma.article.update({
-      where: {
-        slug,
-      },
-      data,
-      include,
-    });
-    console.log('after upd', articleUpdated);
-    return articleUpdated;
-  }
-
-  async addToFavoriteBySlug(
-    slug: string,
-    currentUserId: number,
-  ): Promise<ArticleBuildEntity> {
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
-
-    const currentArticle = await this.prisma.article.findUnique({
-      where: {
-        slug,
-      },
-    });
-
-    const include = this.prepareIncludeParams(includeParams);
-    const article = await this.prisma.article.update({
-      where: { slug },
-      data: {
-        favoritedBy: {
-          connectOrCreate: [
-            {
-              where: {
-                userId_articleId: {
-                  userId: currentUserId,
-                  articleId: currentArticle.id,
-                },
-              },
-              create: {
-                userId: currentUserId,
-              },
-            },
-          ],
-        },
-      },
-      include,
-    });
-
-    return article;
-  }
-
-  async deleteFromFavoriteBySlug(
-    slug: string,
-    currentUserId: number,
-  ): Promise<ArticleBuildEntity> {
-    const includeParams = {
-      author: authorBaseSelect,
-      favoritedBy: favoritedBaseSelect,
-    };
-
-    const currentArticle = await this.prisma.article.findUnique({
-      where: {
-        slug,
-      },
-    });
-
-    const include = this.prepareIncludeParams(includeParams);
-
-    const article = await this.prisma.article.update({
-      where: { slug },
-      data: {
-        favoritedBy: {
-          delete: {
-            userId_articleId: {
-              userId: currentUserId,
-              articleId: currentArticle.id,
-            },
-          },
-        },
-      },
-      include,
-    });
-
-    return article;
-  }
-
-  async changeFavoriteCount(direction: string, slug: string): Promise<void> {
-    const article = await this.prisma.article.findUnique({
-      where: {
-        slug,
-      },
-    });
-
-    if (direction === 'up') {
-      await this.prisma.article.update({
-        where: {
-          slug,
-        },
-        data: {
-          favoritesCount: article.favoritesCount + 1,
-        },
-      });
-    }
-    if (direction === 'down' && article.favoritesCount > 0) {
-      await this.prisma.article.update({
-        where: {
-          slug,
-        },
-        data: {
-          favoritesCount: article.favoritesCount - 1,
-        },
-      });
-    }
-  }
-
-  async countFeed(): Promise<number> {
-    const count = await this.prisma.article.count();
+  async countFeed(queryParams: IArticleQueryParamsRequered): Promise<number> {
+    // const params = this.prepareQueryParams(queryParams);
+    const where = this.prepareWhereParams(queryParams);
+    const count = await this.prisma.article.count({ where });
     return count;
   }
 
-  async checkArticleExist(slug: string): Promise<boolean> {
-    const article = await this.prisma.article.findUnique({
-      where: {
-        slug,
+  async countFollow(currentUserId: number): Promise<number> {
+    const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
+    const where: Prisma.ArticleWhereInput = {
+      authorId: {
+        in: followAuthorsIds,
       },
+    };
+
+    return await this.prisma.article.count({
+      where,
     });
-    return article ? true : false;
   }
 
-  private prepareWhereParams(
-    params: IArticleQueryParamsRequered,
-  ): Prisma.ArticleWhereInput {
+  private prepareWhereParams(params: any): Prisma.ArticleWhereInput {
     const { tag, author, favorited } = params;
     const where = {
       AND: [],
     };
+
     if (tag) {
       where.AND.push({
         tagList: {
-          hasSome: tag,
+          some: {
+            tag: {
+              name: tag,
+            },
+          },
         },
       });
     }
@@ -333,9 +350,7 @@ export class ArticleRepository {
     return where;
   }
 
-  private prepareQueryParams(
-    parms: IArticleQueryParamsRequered,
-  ): Prisma.ArticleFindManyArgs {
+  private prepareQueryParams(parms: any): Prisma.ArticleFindManyArgs {
     const { offset, limit, orderBy, direction } = parms;
     return {
       take: limit,
@@ -346,19 +361,32 @@ export class ArticleRepository {
     };
   }
 
-  private prepareIncludeParams(
-    includeParams: Record<string, any>,
-  ): Prisma.ArticleInclude {
-    const include: Prisma.ArticleInclude = {};
+  // async getArticles() {
+  //   const articlesWithTag = await this.prisma.article.findMany({
+  //     where: {
+  //       tagList: {
+  //         some: {
+  //           tag: {
+  //             name: 'foo',
+  //           },
+  //         },
+  //       },
+  //     },
+  //     include: {
+  //       tagList: {
+  //         include: {
+  //           tag: true,
+  //         },
+  //       },
+  //     },
+  //   });
 
-    for (const key in includeParams) {
-      if (Object.prototype.hasOwnProperty.call(includeParams, key)) {
-        include[key] = {
-          select: includeParams[key],
-        };
-      }
-    }
-
-    return include;
-  }
+  //   // console.log(articlesWithTag);
+  //   articlesWithTag.map((article) => {
+  //     console.dir({ article });
+  //     article.tagList.map((tag) => {
+  //       console.dir({ tag });
+  //     });
+  //   });
+  // }
 }

@@ -19,7 +19,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('doc', app, document);
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(APP_PORT, () =>
     console.log(`===>>>> Server is running on port ${APP_PORT}`),
