@@ -18,6 +18,15 @@ export class CommonService {
     return obj && Object.keys(obj).length !== 0;
   }
 
+  filterEmptyObject(obj: object): object {
+    return Object.keys(obj).reduce((acc, key) => {
+      if (obj[key]) {
+        acc[key] = obj[key];
+      }
+      return acc;
+    }, {});
+  }
+
   exclude = <T, Key extends keyof T>(entity: T, keys: Key[]): Omit<T, Key> => {
     for (const key of keys) {
       delete entity[key];

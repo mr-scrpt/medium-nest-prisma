@@ -84,10 +84,7 @@ export class ArticleController {
     @Headers('Authorization') auth: string | undefined,
     @Body('article') articleCreateDto: ArticleCreateDto,
   ): Promise<ResArticleDto> {
-    return await this.articleService.createArticleComplite(
-      articleCreateDto,
-      auth,
-    );
+    return await this.articleService.createArticle(articleCreateDto, auth);
   }
 
   @UseGuards(AuthGuard)
@@ -126,7 +123,7 @@ export class ArticleController {
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
   ): Promise<ResArticleDto> {
-    return await this.articleService.addToFavoriteBySlugAndToken(slug, auth);
+    return await this.articleService.addToFavorite(slug, auth);
   }
 
   @UseGuards(AuthGuard)
@@ -137,9 +134,6 @@ export class ArticleController {
     @Headers('Authorization') auth: string | undefined,
     @Param('slug') slug: string,
   ): Promise<ResArticleDto> {
-    return await this.articleService.deleteFromFavoriteBySlugAndToken(
-      slug,
-      auth,
-    );
+    return await this.articleService.deleteFromFavorite(slug, auth);
   }
 }

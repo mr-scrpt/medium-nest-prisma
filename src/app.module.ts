@@ -6,7 +6,8 @@ import { AuthModule } from '@app/auth/auth.module';
 import { ArticleModule } from '@app/article/article.module';
 import { CommonModule } from '@app/common/common.module';
 import { ProfileModule } from '@app/profile/profile.module';
-import { FollowModule } from './follow/follow.module';
+import { FollowModule } from '@app/follow/follow.module';
+import { ArticleToTagModule } from '@app/articleToTag/articleToTag.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FollowModule } from './follow/follow.module';
     CommonModule,
     ProfileModule,
     FollowModule,
+    ArticleToTagModule,
   ],
 })
 export class AppModule {}

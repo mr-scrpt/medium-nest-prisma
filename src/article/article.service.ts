@@ -16,6 +16,8 @@ import { ArticleRelationDataDto } from './dto/articleRelationData.dto';
 import { ResArticleDto } from './dto/resArticle.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ArticlePrepareUpdateDto } from './dto/articlePrepateUpdate.dto';
+import { ArticleTransaction } from './article.transaction';
+import { ArticleCheck } from './article.check';
 
 @Injectable()
 export class ArticleService {
@@ -24,6 +26,8 @@ export class ArticleService {
     private readonly userService: UserService,
     private readonly articleRepository: ArticleRepository,
     private readonly tagService: TagService,
+    private readonly articleTransaction: ArticleTransaction,
+    private readonly articleCheck: ArticleCheck,
   ) {}
 
   async getArticleAllByParamsAndToken(
@@ -36,13 +40,12 @@ export class ArticleService {
       queryParams,
     );
 
-    const data = await this.getArticlesFeedWithCompletedData(
+    const articleComplete = await this.getArticlesFeedWithCompletedData(
       articles,
       currentUserId,
     );
 
-    const buildData = this.buildArticlesFeedResponse(data, articleCount);
-    return buildData;
+    return this.buildArticlesFeedResponse(articleComplete, articleCount);
   }
 
   async getArticleFollowByParamsAndToken(
@@ -56,43 +59,39 @@ export class ArticleService {
       currentUserId,
     );
 
-    const data = await this.getArticlesFeedWithCompletedData(
+    const articleComplete = await this.getArticlesFeedWithCompletedData(
       articles,
       currentUserId,
     );
 
-    const buildData = this.buildArticlesFeedResponse(data, articleCount);
-    return buildData;
+    return this.buildArticlesFeedResponse(articleComplete, articleCount);
   }
 
   async getArticleBySlugAndToken(
     slug: string,
     token: Token,
   ): Promise<ResArticleDto> {
+    await this.checkExistArticleBySlug(slug);
+
     const currentUserId = this.userService.getUserIdFromToken(token);
-    const article = await this.checkAndGetArticleBySlug(slug);
+    const article = await this.getArticleBySlug(slug);
 
-    const data = await this.getArticleWithCompletdData(article, currentUserId);
+    const articleComplete = await this.getArticleWithCompletdData(
+      article,
+      currentUserId,
+    );
 
-    return this.buildArticleResponse(data);
+    return this.buildArticleResponse(articleComplete);
   }
 
-  async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
-    const currentUserId = this.userService.getUserIdFromToken(token);
-    const article = await this.checkAndGetArticleBySlug(slug);
-
-    this.checkArticleAuthor(article, currentUserId);
-
-    await this.deleteArticleBySlug(article.slug);
-  }
-
-  async createArticleComplite(
+  async createArticle(
     articleCreateDto: ArticleCreateDto,
     token: Token,
   ): Promise<ResArticleDto> {
-    const cleanArtcle = this.cleanCreateArticleDto(articleCreateDto);
-    const slug = this.genSlug(articleCreateDto.title);
+    const slug = this.commonService.slugGenerator(articleCreateDto.title);
     await this.checkUniqueArticleBySlug(slug);
+
+    const cleanArtcle = this.cleanCreateArticleDto(articleCreateDto);
     const currentUserId = this.userService.getUserIdFromToken(token);
 
     const [articleToDB, tagList] = this.prepareToCreateArticleAndTagList(
@@ -103,13 +102,30 @@ export class ArticleService {
 
     const tagListNormolized = this.tagService.tagListNormolized(tagList);
 
-    await this.createAndCheckArticle(articleToDB, tagListNormolized);
+    await this.articleTransaction.createArticleTransaction(
+      articleToDB,
+      tagListNormolized,
+    );
 
     const article = await this.getArticleBySlug(slug);
 
-    const data = await this.getArticleWithCompletdData(article, currentUserId);
+    const articleComplete = await this.getArticleWithCompletdData(
+      article,
+      currentUserId,
+    );
 
-    return this.buildArticleResponse(data);
+    return this.buildArticleResponse(articleComplete);
+  }
+
+  async deleteArticleBySlugAndToken(slug: string, token: Token): Promise<void> {
+    await this.checkExistArticleBySlug(slug);
+
+    const currentUserId = this.userService.getUserIdFromToken(token);
+    const article = await this.getArticleBySlug(slug);
+
+    this.articleCheck.isAuthor(article.author.id, currentUserId);
+
+    await this.articleTransaction.deleteArticleTransaction(article.slug);
   }
 
   async updateArticleBySlugAndToken(
@@ -117,11 +133,14 @@ export class ArticleService {
     articleUpdateDto: ArticleUpdateDto,
     token: Token,
   ): Promise<ResArticleDto> {
+    await this.checkExistArticleBySlug(slug);
+
     const articleClean = this.cleanUpdateArticleDto(articleUpdateDto);
     const currentUserId = this.userService.getUserIdFromToken(token);
-    const article = await this.checkAndGetArticleBySlug(slug);
 
-    this.checkArticleAuthor(article, currentUserId);
+    const article = await this.getArticleBySlug(slug);
+
+    this.articleCheck.isAuthor(article.author.id, currentUserId);
 
     const slugNew = await this.compareAndGetSlugNew(articleClean, slug);
 
@@ -133,24 +152,70 @@ export class ArticleService {
 
     const tagListNormolized = this.tagService.tagListNormolized(tagList);
 
-    await this.updateAndCheckArticle(articleToDB, tagListNormolized, slug);
+    await this.articleTransaction.updateArticleTransaction(
+      articleToDB,
+      tagListNormolized,
+      slug,
+    );
 
     const articleUpdated = await this.getArticleBySlug(slugNew);
 
-    const data = await this.getArticleWithCompletdData(
+    const articleComplete = await this.getArticleWithCompletdData(
       articleUpdated,
       currentUserId,
     );
 
-    return this.buildArticleResponse(data);
+    return this.buildArticleResponse(articleComplete);
   }
 
-  async compareAndGetSlugNew(
+  async addToFavorite(slug: string, token: Token): Promise<ResArticleDto> {
+    await this.checkExistArticleBySlug(slug);
+    const article = await this.getArticleBySlug(slug);
+
+    const currentUserId = this.userService.getUserIdFromToken(token);
+    const isFavorite = await this.isFavorited(article, currentUserId);
+
+    this.articleCheck.isInFavorites(isFavorite);
+
+    await this.addArticleToFavorites(slug, currentUserId);
+
+    const articleComplete = await this.getArticleWithCompletdData(
+      article,
+      currentUserId,
+    );
+
+    return this.buildArticleResponse(articleComplete);
+  }
+
+  async deleteFromFavorite(slug: string, token: Token): Promise<ResArticleDto> {
+    await this.checkExistArticleBySlug(slug);
+    const article = await this.getArticleBySlug(slug);
+
+    const currentUserId = this.userService.getUserIdFromToken(token);
+    const isFavorite = await this.isFavorited(article, currentUserId);
+
+    this.articleCheck.isNotInFavorites(isFavorite);
+
+    await this.deleteArticleFromFavorites(slug, currentUserId);
+
+    const articleComplete = await this.getArticleWithCompletdData(
+      article,
+      currentUserId,
+    );
+
+    return this.buildArticleResponse(articleComplete);
+  }
+
+  async getArticleBySlug(slug: string): Promise<ArticleWithRelationEntity> {
+    return await this.articleRepository.getArticleBySlug(slug);
+  }
+
+  private async compareAndGetSlugNew(
     article: ArticleUpdateDto,
     slug: string,
   ): Promise<string> {
     if (article.title) {
-      const slugNew = this.genSlug(article.title);
+      const slugNew = this.commonService.slugGenerator(article.title);
       if (slug !== slugNew) {
         await this.checkUniqueArticleBySlug(slugNew);
         return slugNew;
@@ -159,98 +224,36 @@ export class ArticleService {
     return slug;
   }
 
-  async addToFavoriteBySlugAndToken(
-    slug: string,
-    token: Token,
-  ): Promise<ResArticleDto> {
-    const currentUserId = this.userService.getUserIdFromToken(token);
-
-    await this.checkAndGetArticleBySlug(slug);
-
-    const isFavorite = await this.isFavorited(slug, currentUserId);
-
-    this.checkArticleInFavorites(isFavorite);
-
-    await this.addArticleToFavorites(slug, currentUserId);
-
-    const article = await this.getArticleBySlug(slug);
-
-    console.log('article in service', article);
-    const data = await this.getArticleWithCompletdData(article, currentUserId);
-
-    return this.buildArticleResponse(data);
-  }
-
-  async deleteFromFavoriteBySlugAndToken(
-    slug: string,
-    token: Token,
-  ): Promise<ResArticleDto> {
-    const currentUserId = this.userService.getUserIdFromToken(token);
-
-    await this.checkAndGetArticleBySlug(slug);
-
-    const isFavorite = await this.isFavorited(slug, currentUserId);
-
-    this.checkArticleNotInFavorites(isFavorite);
-
-    await this.deleteArticleFromFavorites(slug, currentUserId);
-
-    const article = await this.getArticleBySlug(slug);
-
-    const data = await this.getArticleWithCompletdData(article, currentUserId);
-
-    return this.buildArticleResponse(data);
+  private async articleToTagList(
+    articleToTag: ArticleToTag[],
+  ): Promise<string[]> {
+    if (!articleToTag.length) {
+      return [];
+    }
+    return await this.tagService.getTagListByEntity(articleToTag);
   }
 
   private async addArticleToFavorites(
     slug: string,
     currentUserId: number,
   ): Promise<void> {
-    const article = await this.articleRepository.addArticleToFavorites(
-      slug,
-      currentUserId,
-    );
-    if (!article) {
-      throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
-    }
+    await this.articleRepository.addArticleToFavorites(slug, currentUserId);
   }
 
   private async deleteArticleFromFavorites(
     slug: string,
     currentUserId: number,
   ): Promise<void> {
-    const article = await this.articleRepository.removeArticleFromFavorites(
+    await this.articleRepository.removeArticleFromFavorites(
       slug,
       currentUserId,
     );
-    if (!article) {
-      throw new HttpException('Article not found', HttpStatus.NOT_FOUND);
-    }
-  }
-
-  private checkArticleInFavorites(isFavorite: boolean): void {
-    if (isFavorite) {
-      throw new HttpException(
-        'This article is already in favorites',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  private checkArticleNotInFavorites(isFavorite: boolean): void {
-    if (!isFavorite) {
-      throw new HttpException(
-        'This article is not in favorites',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
   }
 
   private async isFavorited(
-    slug: string,
+    article: ArticleWithRelationEntity,
     currentUserId: number,
   ): Promise<boolean> {
-    const article = await this.checkAndGetArticleBySlug(slug);
     const isInFavorites = article.favoritedBy.some((user) => {
       if (user.userId === currentUserId) {
         return true;
@@ -264,66 +267,14 @@ export class ArticleService {
     return false;
   }
 
-  private checkArticleAuthor(
-    article: ArticleWithRelationEntity,
-    currentUserId: number,
-  ): void {
-    if (article.author?.id !== currentUserId) {
-      throw new HttpException(
-        'You are not the author of this article',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-  }
-
-  private async deleteArticleBySlug(slug: string): Promise<void> {
-    try {
-      await this.articleRepository.deleteArticleBySlug(slug);
-    } catch (error) {
-      console.log(error);
-      throw new HttpException(
-        'Article not deleted',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async getArticleBySlug(
-    slug: string,
-  ): Promise<ArticleWithRelationEntity> {
-    return await this.articleRepository.getArticleBySlug(slug);
-  }
-
-  private async checkAndGetArticleBySlug(
-    slug: string,
-  ): Promise<ArticleWithRelationEntity> {
-    const article = await this.getArticleBySlug(slug);
-
-    if (!article) {
-      throw new HttpException(
-        'Article with this slug not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    return article;
+  private async checkExistArticleBySlug(slug: string): Promise<void> {
+    const article = await this.articleRepository.getArticleBySlug(slug);
+    this.articleCheck.isExist(article);
   }
 
   private async checkUniqueArticleBySlug(slug: string): Promise<void> {
     const article = await this.articleRepository.getArticleBySlug(slug);
-
-    if (article) {
-      throw new HttpException(
-        'Article with this slug already exist',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  private buildArticlesFeedResponse(
-    articles: ArticleFullDataSerializedDto[],
-    articlesCount: number,
-  ): ResArticeFeedDto {
-    return { articles, articlesCount };
+    this.articleCheck.isNotExist(article);
   }
 
   private async getArticlesFeedWithCompletedData(
@@ -394,54 +345,12 @@ export class ArticleService {
     const { title, body, description, tagList } = articleUpdateDto;
     return { title, body, description, tagList };
   }
+
   private cleanCreateArticleDto(
     articleUpdateDto: ArticleCreateDto,
   ): ArticleCreateDto {
     const { title, body, description, tagList } = articleUpdateDto;
     return { title, body, description, tagList };
-  }
-
-  private buildArticleResponse(
-    article: ArticleFullDataSerializedDto,
-  ): ResArticleDto {
-    return { article };
-  }
-
-  async articleToTagList(articleToTag: ArticleToTag[]): Promise<string[]> {
-    if (!articleToTag.length) {
-      return [];
-    }
-    return await this.tagService.getTagListByEntity(articleToTag);
-  }
-
-  private async createAndCheckArticle(
-    articleToDB: ArticleToDBDto,
-    tagList: string[],
-  ): Promise<void> {
-    const articleCreated =
-      await this.articleRepository.createArticleTransaction(
-        articleToDB,
-        tagList,
-      );
-    if (!articleCreated) {
-      throw new HttpException('Article not created', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  private async updateAndCheckArticle(
-    articleToDB: ArticleToDBDto,
-    tagList: string[],
-    slug: string,
-  ): Promise<void> {
-    const articleUpdated =
-      await this.articleRepository.updateArticleTransaction(
-        articleToDB,
-        tagList,
-        slug,
-      );
-    if (!articleUpdated) {
-      throw new HttpException('Article not updated', HttpStatus.BAD_REQUEST);
-    }
   }
 
   private prepareToCreateArticleAndTagList(
@@ -487,14 +396,26 @@ export class ArticleService {
     authorId: number,
   ): ArticleToDBDto {
     const { title, body, description } = articleCreateDto;
-    return { title, body, description, authorId, slug };
+    return {
+      authorId,
+      slug,
+      title,
+      description,
+      body,
+    };
   }
 
-  private genSlug(title: string): string {
-    return this.commonService.slugGenerator(title);
+  // Билдинг ответов
+  private buildArticlesFeedResponse(
+    articles: ArticleFullDataSerializedDto[],
+    articlesCount: number,
+  ): ResArticeFeedDto {
+    return { articles, articlesCount };
   }
 
-  // async getTestArticle(): Promise<void> {
-  //   await this.articleRepository.getArticles();
-  // }
+  private buildArticleResponse(
+    article: ArticleFullDataSerializedDto,
+  ): ResArticleDto {
+    return { article };
+  }
 }
