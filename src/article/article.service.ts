@@ -339,6 +339,7 @@ export class ArticleService {
     ]);
   }
 
+  // Чистка данных
   private cleanUpdateArticleDto(
     articleUpdateDto: ArticleUpdateDto,
   ): ArticleUpdateDto {
@@ -353,6 +354,7 @@ export class ArticleService {
     return { title, body, description, tagList };
   }
 
+  // Подготовка данных
   private prepareToCreateArticleAndTagList(
     articleCreateDto: ArticleCreateDto,
     slug: string,
