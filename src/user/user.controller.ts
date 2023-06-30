@@ -18,13 +18,14 @@ import {
 } from '@nestjs/swagger';
 import { UserService } from '@app/user/user.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
-import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
+
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { UserRequestLoginDto } from '@app/user/dto/userRequestLogin.dto';
 import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/userRequestUpdate.dto';
 import { Token } from '@app/auth/iterface/auth.interface';
+import { ResUserDto } from '@app/user/dto/resUser.dto';
 
 @ApiTags('user')
 @Controller()
@@ -33,21 +34,19 @@ export class UserController {
 
   @Post('users')
   @ApiBody({ type: UserRequestCreateDto })
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @ApiCreatedResponse({ type: ResUserDto })
   @UsePipes(new ValidationPipe())
   async createUsers(
     @Body('user') userCreateDto: UserCreateDto,
-  ): Promise<UserBuildResponseDto> {
+  ): Promise<ResUserDto> {
     return await this.userService.createUser(userCreateDto);
   }
 
   @Post('users/login')
   @ApiBody({ type: UserRequestLoginDto })
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @ApiCreatedResponse({ type: ResUserDto })
   @UsePipes(new ValidationPipe())
-  async login(
-    @Body('user') userLoginDto: UserLoginDto,
-  ): Promise<UserBuildResponseDto> {
+  async login(@Body('user') userLoginDto: UserLoginDto): Promise<ResUserDto> {
     return await this.userService.login(userLoginDto);
   }
 
@@ -58,11 +57,11 @@ export class UserController {
     description: 'Authorization: Token jwt.token.here',
   })
   @ApiBody({ type: UserRequestLoginDto })
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @ApiCreatedResponse({ type: ResUserDto })
   @UsePipes(new ValidationPipe())
   async getUserCurrent(
     @Headers('Authorization') auth: Token,
-  ): Promise<UserBuildResponseDto> {
+  ): Promise<ResUserDto> {
     return await this.userService.getUserCurrent(auth);
   }
 
@@ -73,12 +72,12 @@ export class UserController {
     description: 'Authorization: Token jwt.token.here',
   })
   @ApiBody({ type: UserRequestUpdateDto })
-  @ApiCreatedResponse({ type: UserBuildResponseDto })
+  @ApiCreatedResponse({ type: ResUserDto })
   @UsePipes(new ValidationPipe())
   async updateCurrentUser(
     @Headers('Authorization') auth: Token,
     @Body('user') userUpdateDto: UserUpdateDto,
-  ): Promise<UserBuildResponseDto> {
+  ): Promise<ResUserDto> {
     return await this.userService.updateUser(userUpdateDto, auth);
   }
 }

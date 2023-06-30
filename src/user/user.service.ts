@@ -2,49 +2,41 @@ import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
 import { AuthService } from '@app/auth/auth.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserEntity } from '@app/user/entity/user.entity';
-import { UserBuildResponseDto } from '@app/user/dto/userBuildResponse.dto';
+import { ResUserDto } from '@app/user/dto/resUser.dto';
 import { UserLoginDto } from '@app/user/dto/userLogin.dto';
 import { TokenDecode } from '@app/user/type/tokenDecode.interface';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { CommonService } from '@app/common/common.service';
 import { UserRepository } from '@app/user/user.repository';
 import { Token } from '@app/auth/iterface/auth.interface';
-import { UserCheck } from './user.check';
+import { UserCheck } from '@app/user/user.check';
+import { ResUserWithTokenDto } from './dto/resUserWithToken.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     private authService: AuthService,
-    private common: CommonService,
-    private userRepository: UserRepository, // private prisma: PrismaService,
+    private commonService: CommonService,
+    private userRepository: UserRepository,
     private userCheck: UserCheck,
   ) {}
 
-  async login({
-    email,
-    password,
-  }: UserLoginDto): Promise<UserBuildResponseDto> {
+  async login({ email, password }: UserLoginDto): Promise<ResUserDto> {
     const user = await this.checkLoginData(email, password);
-    return this.buildUserResponse(user);
+    console.log(user);
+    return this.buildUserResponseWithToken(user);
   }
 
-  async getUserCurrent(token: Token): Promise<UserBuildResponseDto> {
+  async getUserCurrent(token: Token): Promise<ResUserDto> {
     const user = await this.getUserByToken(token);
 
     return this.buildUserResponse(user);
   }
 
-  async getUserByToken(tokenString: Token): Promise<UserEntity> {
-    const id = this.getUserIdFromToken(tokenString);
-
-    return await this.checkAndGetUserById(id);
-  }
-
-  async createUser(
-    userCreateDto: UserCreateDto,
-  ): Promise<UserBuildResponseDto> {
+  async createUser(userCreateDto: UserCreateDto): Promise<ResUserDto> {
     const userClean = this.prepareUserCreateObject(userCreateDto);
-    await this.checkUniqueEmailAndName(userClean.email, userClean.username);
+    const { email, username } = userCreateDto;
+    await this.checkUniqueUser(email, username);
 
     const passwordHashed = await this.authService.hashPassword(
       userClean.password,
@@ -63,7 +55,7 @@ export class UserService {
   async updateUser(
     userUpdateDto: UserUpdateDto,
     token: Token,
-  ): Promise<UserBuildResponseDto> {
+  ): Promise<ResUserDto> {
     const userClean = this.prepareUserUpdateObject(userUpdateDto);
     const { id, password } = await this.getUserByToken(token);
 
@@ -71,33 +63,29 @@ export class UserService {
 
     const { password: passwordNew, passwordOld, email, username } = userClean;
 
-    await this.checkUniqueEmailAndName(email, username);
+    await this.checkUniqueUser(email, username);
 
-    const hashPassword = await this.validateAndGenerateHashedPassword(
-      passwordNew,
-      passwordOld,
-      password,
-    );
+    await this.validatePassword(passwordNew, passwordOld, password);
 
-    delete userClean.passwordOld;
-    userClean.password = hashPassword;
-    const userUpdate = this.generateStructureUpdateUser(userClean);
+    const passwordHashed = await this.generatePassword(passwordNew);
 
-    const userUpdateResponse = await this.userRepository.updateUser(
-      id,
-      userUpdate,
-    );
+    const data = this.generateStructureUpdateUser(userClean, passwordHashed);
 
-    return this.buildUserResponse(userUpdateResponse);
+    const user = await this.userRepository.updateUser(id, data);
+
+    return this.buildUserResponse(user);
   }
 
-  async checkAndGetUserByName(username: string): Promise<UserEntity> {
+  async checkUserByName(username: string): Promise<boolean> {
     const user = await this.userRepository.getUserByName(username);
 
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-    return user;
+    this.userCheck.isExistUser(user);
+
+    return true;
+  }
+
+  async getUserByName(username: string): Promise<UserEntity> {
+    return await this.userRepository.getUserByName(username);
   }
 
   getUserIdFromToken(tokenString: string): number {
@@ -112,10 +100,18 @@ export class UserService {
     // return +id;
   }
 
+  async getUserByToken(tokenString: Token): Promise<UserEntity> {
+    const id = this.getUserIdFromToken(tokenString);
+    this.checkUserById(id);
+
+    return await this.getUserById(id);
+  }
+
   private async checkLoginData(
     email: string,
     password: string,
   ): Promise<UserEntity> {
+    // Перехватываем ошибки о которых пользователю не нужно знать и даем общую ошибку
     try {
       await this.checkEmailExist(email);
 
@@ -137,36 +133,53 @@ export class UserService {
     this.userCheck.isExistUser(user);
   }
 
-  /***/
-  private async checkUserByToken(
-    tokenString: string | undefined,
-  ): Promise<void> {
-    if (!tokenString) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
-    }
-    const userExists = await this.getUserByToken(tokenString);
-    if (!userExists) {
-      throw new HttpException(
-        'User not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+  private async checkUserById(id: number): Promise<void> {
+    const user = await this.userRepository.getUserById(id);
+    this.userCheck.isExistUser(user);
   }
 
-  private async checkAndGetUserById(id: number): Promise<UserEntity> {
-    const user = await this.userRepository.getUserById(id);
+  private getUserById(id: number): Promise<UserEntity> {
+    return this.userRepository.getUserById(id);
+  }
 
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+  private async validatePassword(
+    passwordNew: string,
+    passwordOld: string,
+    password: string,
+  ): Promise<void> {
+    this.checkPasswordData(passwordNew, passwordOld);
+
+    if (!passwordNew && !passwordOld) {
+      return;
     }
-    return user;
+
+    await this.checkValidatePassword(passwordOld, password);
+  }
+
+  private async generatePassword(password: string): Promise<string> {
+    if (!password) {
+      return '';
+    }
+    return await this.authService.hashPassword(password);
+  }
+
+  private checkPasswordData(
+    passwordLeft: string,
+    passwordRight: string,
+  ): boolean {
+    return this.userCheck.isExistPassword(passwordLeft, passwordRight);
   }
 
   private async checkValidatePassword(
     passwordLeft: string,
     passwordRight: string,
   ): Promise<void> {
-    const isValid = await this.authService.validatePassword(
+    let isValid: boolean;
+
+    if (!passwordLeft && !passwordRight) {
+      isValid = false;
+    }
+    isValid = await this.authService.validatePassword(
       passwordLeft,
       passwordRight,
     );
@@ -174,39 +187,7 @@ export class UserService {
     this.userCheck.isValidPassword(isValid);
   }
 
-  private checkPasswordData(
-    passworLeft: string,
-    passwordRight: string,
-  ): boolean {
-    if ((passworLeft && !passwordRight) || (!passworLeft && passwordRight)) {
-      throw new HttpException(
-        'Password and passwordOld are required',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    return true;
-  }
-
-  /***/
-  private async validateAndGenerateHashedPassword(
-    passwordNew: string,
-    passwordOld: string,
-    password: string,
-  ): Promise<string> {
-    this.checkPasswordData(passwordNew, passwordOld);
-
-    if (!passwordNew && !passwordOld) {
-      return '';
-    }
-
-    await this.checkValidatePassword(passwordOld, password);
-
-    return await this.authService.hashPassword(passwordNew);
-  }
-
-  /***/
-  private async checkUniqueEmailAndName(
+  private async checkUniqueUser(
     email: string,
     username: string,
   ): Promise<void> {
@@ -214,54 +195,40 @@ export class UserService {
       email,
       username,
     );
-    if (userExists) {
-      throw new HttpException(
-        'Email or username are taken',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+
+    this.userCheck.isUniqueUser(userExists);
   }
 
-  /***/
   private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
-    const isNotEmptyObject = this.common.isNotEmptyObject(updateUserDto);
-    if (!isNotEmptyObject) {
-      throw new HttpException(
-        'At least one field must be filled',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    const isNotEmptyObject = this.commonService.isNotEmptyObject(updateUserDto);
+    this.userCheck.isNotEmptyUpdate(isNotEmptyObject);
   }
 
-  /***/
   private generateStructureUpdateUser(
     userUpdateDto: UserUpdateDto,
+    passwordHashed: string,
   ): UserUpdateDto {
+    const user = { ...userUpdateDto };
+    delete user.passwordOld;
+    user.password = passwordHashed;
     return Object.fromEntries(
-      Object.entries(userUpdateDto).filter(([_, value]) => value !== ''),
+      Object.entries(user).filter(([_, value]) => value !== ''),
     );
   }
-  prepareUserCreateObject(userUpdateDto: UserCreateDto): UserCreateDto {
+
+  private prepareUserCreateObject(userUpdateDto: UserCreateDto): UserCreateDto {
     const { username, email, password } = userUpdateDto;
 
     return { username, email, password };
   }
-  prepareUserUpdateObject(userUpdateDto: UserUpdateDto): UserUpdateDto {
+  private prepareUserUpdateObject(userUpdateDto: UserUpdateDto): UserUpdateDto {
     const { username, email, password, passwordOld, bio, image } =
       userUpdateDto;
 
     return { username, email, password, passwordOld, bio, image };
   }
 
-  // prepareUserCreateObject(userUpdateDto: UserUpdateDto): UserUpdateDto {
-  //   const { username, email, password, passwordOld, bio, image } =
-  //     userUpdateDto;
-
-  //   return { username, email, password, passwordOld, bio, image };
-  // }
-
-  /***/
-  buildUserResponse(user: UserEntity): UserBuildResponseDto {
+  private buildUserResponseWithToken(user: UserEntity): ResUserWithTokenDto {
     const { id, username, email, bio, image } = user;
     const token = this.authService.generateJWT(id.toString());
     return {
@@ -271,6 +238,18 @@ export class UserService {
         bio,
         image,
         token,
+      },
+    };
+  }
+
+  private buildUserResponse(user: UserEntity): ResUserDto {
+    const { username, email, bio, image } = user;
+    return {
+      user: {
+        username,
+        email,
+        bio,
+        image,
       },
     };
   }

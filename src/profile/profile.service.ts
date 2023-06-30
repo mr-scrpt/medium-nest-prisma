@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ProfileClearDto } from './dto/profileClear.dto';
 import { ProfileBuildResponseDto } from './dto/profileBuildResponse.dto';
 import { ProfileResponseDto } from './dto/profileResponse.dto';
 import { UserService } from '@app/user/user.service';
@@ -19,7 +18,8 @@ export class ProfileService {
     token: Token,
   ): Promise<ProfileBuildResponseDto> {
     const userCurrent = await this.userService.getUserByToken(token);
-    const user = await this.checkAndGetProfile(username);
+    await this.checkProfileByName(username);
+    const user = await this.getProfileByName(username);
     const isFollowing = await this.followService.isFollowing(
       userCurrent.id,
       user.id,
@@ -32,7 +32,8 @@ export class ProfileService {
     token: Token,
   ): Promise<ProfileBuildResponseDto> {
     const userCurrent = await this.userService.getUserByToken(token);
-    const user = await this.userService.checkAndGetUserByName(username);
+    await this.checkProfileByName(username);
+    const user = await this.getProfileByName(username);
     await this.followService.checkIsFollowing(userCurrent.id, user.id);
     await this.followService.followUser(userCurrent.id, user.id);
     return this.buildProfileResponse({ ...user, following: true });
@@ -43,15 +44,19 @@ export class ProfileService {
     token: Token,
   ): Promise<ProfileBuildResponseDto> {
     const userCurrent = await this.userService.getUserByToken(token);
-    const user = await this.userService.checkAndGetUserByName(username);
+    await this.checkProfileByName(username);
+    const user = await this.getProfileByName(username);
     await this.followService.checkIsNotFollowing(userCurrent.id, user.id);
     await this.followService.unfollowUser(userCurrent.id, user.id);
     return this.buildProfileResponse({ ...user, following: false });
   }
 
-  private async checkAndGetProfile(username: string): Promise<ProfileDto> {
-    const user = await this.userService.checkAndGetUserByName(username);
-    return user;
+  private async checkProfileByName(username: string): Promise<boolean> {
+    return await this.userService.checkUserByName(username);
+  }
+
+  private async getProfileByName(username: string): Promise<ProfileDto> {
+    return await this.userService.getUserByName(username);
   }
 
   private buildProfileResponse(

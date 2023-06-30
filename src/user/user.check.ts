@@ -17,8 +17,18 @@ export class UserCheck {
     return true;
   }
 
-  isValidPassword(flag: boolean): boolean {
-    if (!flag) {
+  isUniqueUser(bool: boolean): boolean {
+    if (bool) {
+      throw new HttpException(
+        'Email or username are taken',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+    return true;
+  }
+
+  isValidPassword(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException(
         'Password is invalid',
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -27,9 +37,29 @@ export class UserCheck {
     return true;
   }
 
+  isExistPassword(passwordLeft: string, passwordRight: string): boolean {
+    if ((passwordLeft && !passwordRight) || (!passwordLeft && passwordRight)) {
+      throw new HttpException(
+        'New password and old password are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return true;
+  }
+
   isTokenExist(token: string): boolean {
     if (!token) {
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+    }
+    return true;
+  }
+
+  isNotEmptyUpdate(bool: boolean): boolean {
+    if (!bool) {
+      throw new HttpException(
+        'At least one field must be filled',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
     return true;
   }
