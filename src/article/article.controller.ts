@@ -30,12 +30,6 @@ import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
-  // @Get('test')
-  // async test(): Promise<void> {
-  //   console.log('test');
-  //   this.articleService.getTestArticle();
-  // }
-
   @Get()
   @ApiCreatedResponse({ type: ResArticeFeedDto })
   @UsePipes(new ValidationPipe())

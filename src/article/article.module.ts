@@ -5,24 +5,23 @@ import { UserModule } from '@app/user/user.module';
 import { PrismaModule } from '@app/prisma/prisma.module';
 import { CommonModule } from '@app/common/common.module';
 import { ArticleRepository } from './article.repository';
-import { TagService } from '@app/tag/tag.service';
-import { TagRepository } from '@app/tag/tag.repository';
-import { ArticleToTagRepository } from '@app/articleToTag/articleToTag.repository';
-import { Transaction } from '@app/common/common.transaction';
 import { ArticleToTagModule } from '@app/articleToTag/articleToTag.module';
 import { ArticleTransaction } from './article.transaction';
 import { ArticleCheck } from './article.check';
+import { TagModule } from '@app/tag/tag.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, CommonModule, ArticleToTagModule],
+  imports: [
+    UserModule,
+    PrismaModule,
+    CommonModule,
+    ArticleToTagModule,
+    TagModule,
+  ],
   controllers: [ArticleController],
   providers: [
     ArticleService,
     ArticleRepository,
-    TagService,
-    TagRepository,
-    ArticleToTagRepository,
-    Transaction,
     ArticleTransaction,
     ArticleCheck,
   ],

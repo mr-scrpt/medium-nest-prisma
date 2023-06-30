@@ -5,5 +5,6 @@ import { FollowService } from './follow.service';
 
 @Module({
   providers: [FollowRepository, FollowService, PrismaService],
+  exports: [FollowService, FollowRepository],
 })
 export class FollowModule {}

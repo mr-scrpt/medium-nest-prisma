@@ -6,5 +6,6 @@ import { PrismaModule } from '@app/prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   providers: [ArticleToTagService, ArticleToTagRepository],
+  exports: [ArticleToTagService, ArticleToTagRepository],
 })
 export class ArticleToTagModule {}

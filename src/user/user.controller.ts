@@ -7,6 +7,7 @@ import {
   Body,
   UseGuards,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserRequestCreateDto } from '@app/user/dto/userRequestCreate.dto';
 import {
@@ -24,7 +25,6 @@ import { AuthGuard } from '@app/auth/guard/auth.guard';
 import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { UserRequestUpdateDto } from './dto/userRequestUpdate.dto';
 import { Token } from '@app/auth/iterface/auth.interface';
-import { CustomValidationPipe } from '@app/common/common.pipe';
 
 @ApiTags('user')
 @Controller()
@@ -34,7 +34,7 @@ export class UserController {
   @Post('users')
   @ApiBody({ type: UserRequestCreateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new CustomValidationPipe())
+  @UsePipes(new ValidationPipe())
   async createUsers(
     @Body('user') userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
@@ -44,7 +44,7 @@ export class UserController {
   @Post('users/login')
   @ApiBody({ type: UserRequestLoginDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new CustomValidationPipe())
+  @UsePipes(new ValidationPipe())
   async login(
     @Body('user') userLoginDto: UserLoginDto,
   ): Promise<UserBuildResponseDto> {
@@ -59,9 +59,9 @@ export class UserController {
   })
   @ApiBody({ type: UserRequestLoginDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new CustomValidationPipe())
+  @UsePipes(new ValidationPipe())
   async getUserCurrent(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
   ): Promise<UserBuildResponseDto> {
     return await this.userService.getUserCurrent(auth);
   }
@@ -74,7 +74,7 @@ export class UserController {
   })
   @ApiBody({ type: UserRequestUpdateDto })
   @ApiCreatedResponse({ type: UserBuildResponseDto })
-  @UsePipes(new CustomValidationPipe())
+  @UsePipes(new ValidationPipe())
   async updateCurrentUser(
     @Headers('Authorization') auth: Token,
     @Body('user') userUpdateDto: UserUpdateDto,

@@ -9,7 +9,7 @@ import { UserUpdateDto } from '@app/user/dto/userUpdate.dto';
 import { CommonService } from '@app/common/common.service';
 import { UserRepository } from '@app/user/user.repository';
 import { Token } from '@app/auth/iterface/auth.interface';
-// import { PrismaService } from '@app/prisma/prisma.service';
+import { UserCheck } from './user.check';
 
 @Injectable()
 export class UserService {
@@ -17,7 +17,29 @@ export class UserService {
     private authService: AuthService,
     private common: CommonService,
     private userRepository: UserRepository, // private prisma: PrismaService,
+    private userCheck: UserCheck,
   ) {}
+
+  async login({
+    email,
+    password,
+  }: UserLoginDto): Promise<UserBuildResponseDto> {
+    const user = await this.checkLoginData(email, password);
+    return this.buildUserResponse(user);
+  }
+
+  async getUserCurrent(token: Token): Promise<UserBuildResponseDto> {
+    const user = await this.getUserByToken(token);
+
+    return this.buildUserResponse(user);
+  }
+
+  async getUserByToken(tokenString: Token): Promise<UserEntity> {
+    const id = this.getUserIdFromToken(tokenString);
+
+    return await this.checkAndGetUserById(id);
+  }
+
   async createUser(
     userCreateDto: UserCreateDto,
   ): Promise<UserBuildResponseDto> {
@@ -43,7 +65,7 @@ export class UserService {
     token: Token,
   ): Promise<UserBuildResponseDto> {
     const userClean = this.prepareUserUpdateObject(userUpdateDto);
-    const { id, password } = await this.checkAndGetUserByToken(token);
+    const { id, password } = await this.getUserByToken(token);
 
     this.validateUpdateUserDto(userClean);
 
@@ -69,28 +91,6 @@ export class UserService {
     return this.buildUserResponse(userUpdateResponse);
   }
 
-  async login(userLoginDto: UserLoginDto): Promise<UserBuildResponseDto> {
-    const { email, password } = userLoginDto;
-
-    const user = await this.checkAndGetUserByEmail(email);
-
-    await this.checkValidatePassword(password, user.password);
-
-    return this.buildUserResponse(user);
-  }
-
-  async getUserCurrent(token: Token): Promise<UserBuildResponseDto> {
-    const user = await this.checkAndGetUserByToken(token);
-
-    return this.buildUserResponse(user);
-  }
-
-  async getUserByToken(tokenString: string | undefined): Promise<UserEntity> {
-    const id = this.getUserIdFromToken(tokenString);
-
-    return await this.checkAndGetUserById(id);
-  }
-
   async checkAndGetUserByName(username: string): Promise<UserEntity> {
     const user = await this.userRepository.getUserByName(username);
 
@@ -107,23 +107,40 @@ export class UserService {
     } catch (error) {
       return null;
     }
+    // const { id } = this.authService.decodeToken(tokenString) as TokenDecode;
+    // this.userCheck.isExistId(+id);
+    // return +id;
   }
 
-  private async checkAndGetUserByEmail(email: string): Promise<UserEntity> {
-    const user = await this.userRepository.getUserByEmail(email);
-    if (!user) {
+  private async checkLoginData(
+    email: string,
+    password: string,
+  ): Promise<UserEntity> {
+    try {
+      await this.checkEmailExist(email);
+
+      const user = await this.userRepository.getUserByEmail(email);
+
+      await this.checkValidatePassword(password, user.password);
+
+      return user;
+    } catch (e) {
       throw new HttpException(
-        'Email or password are invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
+        'login or password incorrect',
+        HttpStatus.BAD_REQUEST,
       );
     }
-    return user;
+  }
+
+  private async checkEmailExist(email: string): Promise<void> {
+    const user = await this.userRepository.getUserByEmail(email);
+    this.userCheck.isExistUser(user);
   }
 
   /***/
-  private async checkAndGetUserByToken(
+  private async checkUserByToken(
     tokenString: string | undefined,
-  ): Promise<UserEntity> {
+  ): Promise<void> {
     if (!tokenString) {
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
@@ -134,7 +151,6 @@ export class UserService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    return userExists;
   }
 
   private async checkAndGetUserById(id: number): Promise<UserEntity> {
@@ -155,12 +171,7 @@ export class UserService {
       passwordRight,
     );
 
-    if (!isValid) {
-      throw new HttpException(
-        'Password is invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
+    this.userCheck.isValidPassword(isValid);
   }
 
   private checkPasswordData(

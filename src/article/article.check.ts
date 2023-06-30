@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ArticleEntity } from './entity/article.entity';
-import { ArticleWithRelationEntity } from './entity/aticleWithRelation.entity';
 
 @Injectable()
 export class ArticleCheck {

@@ -20,9 +20,12 @@ export class AuthService {
   }
 
   decodeToken(tokenString: string): string | JwtPayload {
-    const token = this.getToken(tokenString);
-
-    return this.decodeJWT(token);
+    try {
+      const token = this.getToken(tokenString);
+      return this.decodeJWT(token);
+    } catch (error) {
+      return null;
+    }
   }
 
   private serializeHash = (hash: Buffer, salt: Buffer) => {
@@ -75,13 +78,13 @@ export class AuthService {
       });
     });
 
-  validatePassword = (password: string, serHash: string) => {
+  validatePassword = (password: string, serHash: string): Promise<boolean> => {
     const { params, salt, hash } = this.deserializeHash(serHash);
     return new Promise((resolve, reject) => {
       const callback = (err: Error, hashedPassword: Buffer) => {
         if (err) {
           reject(err);
-          return;
+          // return;
         }
         resolve(timingSafeEqual(hashedPassword, hash));
       };
