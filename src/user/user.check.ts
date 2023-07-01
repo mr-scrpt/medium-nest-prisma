@@ -17,8 +17,8 @@ export class UserCheck {
     return true;
   }
 
-  isUniqueUser(bool: boolean): boolean {
-    if (bool) {
+  isUniqueUser(user: UserEntity): boolean {
+    if (user) {
       throw new HttpException(
         'Email or username are taken',
         HttpStatus.UNPROCESSABLE_ENTITY,

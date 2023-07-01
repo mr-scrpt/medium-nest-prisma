@@ -191,7 +191,7 @@ export class UserService {
     email: string,
     username: string,
   ): Promise<void> {
-    const userExists = await this.userRepository.checkEmailAndName(
+    const userExists = await this.userRepository.getUserByEmailOrName(
       email,
       username,
     );

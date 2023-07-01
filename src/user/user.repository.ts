@@ -52,7 +52,10 @@ export class UserRepository {
     });
   }
 
-  async checkEmailAndName(email: string, username: string): Promise<boolean> {
+  async getUserByEmailOrName(
+    email: string,
+    username: string,
+  ): Promise<UserEntity> {
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -66,6 +69,6 @@ export class UserRepository {
       },
     });
 
-    return user ? true : false;
+    return user;
   }
 }
