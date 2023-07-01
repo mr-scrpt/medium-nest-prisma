@@ -20,9 +20,9 @@ export class ArticleToTagRepository {
   async deleteNotExistArticleToTag(
     articleId: number,
     existingTagIds: number[],
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<void> {
-    await driver.articleToTag.deleteMany({
+    await prisma.articleToTag.deleteMany({
       where: {
         articleId: articleId,
         tagId: {
@@ -35,9 +35,9 @@ export class ArticleToTagRepository {
   async createNewArticleToTag(
     articleId: number,
     newTags: TagEntity[],
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<void> {
-    await driver.articleToTag.createMany({
+    await prisma.articleToTag.createMany({
       data: newTags.map((tag) => ({
         articleId: articleId,
         tagId: tag.id,
