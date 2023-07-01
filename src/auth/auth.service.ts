@@ -28,13 +28,13 @@ export class AuthService {
     }
   }
 
-  private serializeHash = (hash: Buffer, salt: Buffer) => {
+  private serializeHash(hash: Buffer, salt: Buffer) {
     const saltString = salt.toString('base64').split('=')[0];
     const hashString = hash.toString('base64').split('=')[0];
     return `${this.SCRYPT_PREFIX}${saltString}$${hashString}`;
-  };
+  }
 
-  private parseOptions = (options: string) => {
+  private parseOptions(options: string) {
     const values = [];
     const items = options.split(',');
     for (const item of items) {
@@ -42,9 +42,9 @@ export class AuthService {
       values.push([key, Number(val)]);
     }
     return Object.fromEntries(values);
-  };
+  }
 
-  private deserializeHash = (phcString: string) => {
+  private deserializeHash(phcString: string) {
     const [, name, options, salt64, hash64] = phcString.split('$');
     if (name !== 'scrypt') {
       throw new Error('Node.js crypto module only supports scrypt');
@@ -53,10 +53,10 @@ export class AuthService {
     const salt = Buffer.from(salt64, 'base64');
     const hash = Buffer.from(hash64, 'base64');
     return { params, salt, hash };
-  };
+  }
 
-  hashPassword = (password: string): Promise<string> =>
-    new Promise((resolve, reject) => {
+  hashPassword(password: string): Promise<string> {
+    return new Promise((resolve, reject) => {
       randomBytes(this.SALT_LEN, (err, salt) => {
         if (err) {
           reject(err);
@@ -77,8 +77,9 @@ export class AuthService {
         );
       });
     });
+  }
 
-  validatePassword = (password: string, serHash: string): Promise<boolean> => {
+  validatePassword(password: string, serHash: string): Promise<boolean> {
     const { params, salt, hash } = this.deserializeHash(serHash);
     return new Promise((resolve, reject) => {
       const callback = (err: Error, hashedPassword: Buffer) => {
@@ -90,13 +91,13 @@ export class AuthService {
       };
       scrypt(password, salt, hash.length, params, callback);
     });
-  };
+  }
 
-  generateJWT = (id: string): string => {
+  generateJWT(id: string): string {
     return sign({ id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-  };
+  }
 
-  decodeJWT = (token: string): JwtPayload | string => {
+  decodeJWT(token: string): JwtPayload | string {
     return verify(token, process.env.JWT_SECRET);
-  };
+  }
 }
