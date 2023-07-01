@@ -8,9 +8,9 @@ export class ArticleToTagRepository {
   constructor(private readonly prisma: PrismaService) {}
   async deleteByArticleId(
     articleId: number,
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<void> {
-    await driver.articleToTag.deleteMany({
+    await prisma.articleToTag.deleteMany({
       where: {
         articleId: articleId,
       },

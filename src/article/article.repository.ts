@@ -15,18 +15,19 @@ export class ArticleRepository {
 
   async createArticle(
     data: ArticleToDBDto,
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleEntity> {
-    return await driver.article.create({ data });
+    return await prisma.article.create({ data });
   }
 
   async getArticleAllByParams(
     queryParams: IArticleQueryParamsRequered,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleWithRelationEntity[]> {
     const params = this.prepareQueryParams(queryParams);
     const where = this.prepareWhereParams(queryParams);
 
-    const articles = await this.prisma.article.findMany({
+    const articles = await prisma.article.findMany({
       ...params,
       where,
       include,
@@ -38,6 +39,7 @@ export class ArticleRepository {
   async getArticleFollowByParams(
     queryParams: IArticleQueryParamsRequered,
     currentUserId: number,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleWithRelationEntity[]> {
     const params = this.prepareQueryParams(queryParams);
     const followAuthorsIds = await this.getFollowAuthorsIds(currentUserId);
@@ -47,7 +49,7 @@ export class ArticleRepository {
       },
     };
 
-    const articles = await this.prisma.article.findMany({
+    const articles = await prisma.article.findMany({
       ...params,
       where,
       include,
@@ -56,8 +58,11 @@ export class ArticleRepository {
     return articles;
   }
 
-  async getFollowAuthorsIds(currentUserId: number): Promise<number[]> {
-    const followAuthors = await this.prisma.userToUser.findMany({
+  async getFollowAuthorsIds(
+    currentUserId: number,
+    prisma: Tx = this.prisma,
+  ): Promise<number[]> {
+    const followAuthors = await prisma.userToUser.findMany({
       where: {
         followerId: currentUserId,
       },
@@ -72,9 +77,9 @@ export class ArticleRepository {
 
   async getArticleBySlug(
     slug: string,
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleWithRelationEntity> {
-    const article = await driver.article.findUnique({
+    const article = await prisma.article.findUnique({
       where: {
         slug,
       },
@@ -90,8 +95,9 @@ export class ArticleRepository {
   async addArticleToFavorites(
     slug: string,
     currentUserId: number,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleWithRelationEntity> {
-    const article = await this.prisma.article.findUnique({
+    const article = await prisma.article.findUnique({
       where: {
         slug,
       },
@@ -116,7 +122,7 @@ export class ArticleRepository {
       return null;
     }
 
-    const articleUpdated = await this.prisma.article.update({
+    const articleUpdated = await prisma.article.update({
       where: {
         slug,
       },
@@ -139,8 +145,9 @@ export class ArticleRepository {
   async removeArticleFromFavorites(
     slug: string,
     currentUserId: number,
+    prisma: Tx = this.prisma,
   ): Promise<ArticleWithRelationEntity> {
-    const article = await this.prisma.article.findUnique({
+    const article = await prisma.article.findUnique({
       where: {
         slug,
       },
@@ -165,7 +172,7 @@ export class ArticleRepository {
       return null;
     }
 
-    const articleUpdated = await this.prisma.article.update({
+    const articleUpdated = await prisma.article.update({
       where: {
         slug,
       },
@@ -191,9 +198,9 @@ export class ArticleRepository {
   async updateArticle(
     articleToDBDto: ArticleToDBDto,
     slug: string,
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<PayloadInclude> {
-    const articleUpdated: PayloadInclude = await driver.article.update({
+    const articleUpdated: PayloadInclude = await prisma.article.update({
       where: {
         slug: slug,
       },

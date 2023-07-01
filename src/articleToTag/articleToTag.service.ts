@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ArticleToTagRepository } from './articleToTag.repository';
+import { ArticleToTagRepository } from '@app/articleToTag/articleToTag.repository';
 
 @Injectable()
 export class ArticleToTagService {
