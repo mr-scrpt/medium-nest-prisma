@@ -1,3 +1,4 @@
+import { Tx } from '@app/common/common.type';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { FollowEntity } from './entity/follow.entity';
@@ -9,13 +10,14 @@ export class FollowRepository {
   async getFollowData(
     currentUserId: number,
     userId: number,
+    prisma: Tx = this.prisma,
   ): Promise<FollowEntity> {
     const where = {
       followerId: currentUserId,
       followingId: userId,
     };
 
-    return await this.prisma.userToUser.findFirst({
+    return await prisma.userToUser.findFirst({
       where,
     });
   }
@@ -23,8 +25,9 @@ export class FollowRepository {
   async followUser(
     currentUserId: number,
     userId: number,
+    prisma: Tx = this.prisma,
   ): Promise<FollowEntity> {
-    return await this.prisma.userToUser.create({
+    return await prisma.userToUser.create({
       data: {
         followerId: currentUserId,
         followingId: userId,
@@ -35,13 +38,14 @@ export class FollowRepository {
   async unfollowUser(
     currentUserId: number,
     userId: number,
+    prisma: Tx = this.prisma,
   ): Promise<FollowEntity> {
     const where = {
       followerId: currentUserId,
       followingId: userId,
     };
 
-    return await this.prisma.userToUser.delete({
+    return await prisma.userToUser.delete({
       where: {
         followerId_followingId: where,
       },
