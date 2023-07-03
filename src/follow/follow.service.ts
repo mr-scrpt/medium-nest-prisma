@@ -59,11 +59,7 @@ export class FollowService {
     currentUserId: number,
     userId: number,
   ): Promise<void> {
-    if (currentUserId === userId) {
-      throw new HttpException(
-        'You cannot unfollow yourself',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const isYourself = currentUserId === userId;
+    this.followCheck.isYourself(!!isYourself);
   }
 }

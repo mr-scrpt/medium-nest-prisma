@@ -30,4 +30,14 @@ export class FollowCheck {
     }
     return true;
   }
+
+  isYourself(bool: boolean): boolean {
+    if (bool) {
+      throw new HttpException(
+        'You can not unfollow yourself',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return true;
+  }
 }
