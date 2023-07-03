@@ -269,12 +269,12 @@ export class ArticleService {
 
   private async checkExistArticleBySlug(slug: string): Promise<void> {
     const article = await this.articleRepository.getArticleBySlug(slug);
-    this.articleCheck.isExist(article);
+    this.articleCheck.isExist(!!article);
   }
 
   private async checkUniqueArticleBySlug(slug: string): Promise<void> {
     const article = await this.articleRepository.getArticleBySlug(slug);
-    this.articleCheck.isNotExist(article);
+    this.articleCheck.isNotExist(!!article);
   }
 
   private async getArticlesFeedWithCompletedData(

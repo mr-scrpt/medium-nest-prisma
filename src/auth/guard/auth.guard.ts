@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
     // if (!tokenString) {
     //   throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     // }
-    this.userCheck.isTokenExist(tokenString);
+    this.userCheck.isTokenExist(!!tokenString);
 
     try {
       await this.userService.getUserByToken(tokenString);

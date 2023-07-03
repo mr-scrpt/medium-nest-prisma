@@ -44,14 +44,12 @@ export class ArticleTransaction extends Transaction {
         tx,
       );
 
-      // await this.tagRepository.deleteUnuseTags(tx);
-
       return article;
     };
 
     const article = await this.start<ArticleEntity>(action);
 
-    this.articleCheck.isCreated(article);
+    this.articleCheck.isCreated(!!article);
   }
 
   async updateArticleTransaction(
@@ -94,7 +92,7 @@ export class ArticleTransaction extends Transaction {
 
     const article = await this.start<ArticleEntity>(action);
 
-    this.articleCheck.isUpdated(article);
+    this.articleCheck.isUpdated(!!article);
   }
 
   async deleteArticleTransaction(slug: string): Promise<void> {
@@ -117,6 +115,6 @@ export class ArticleTransaction extends Transaction {
 
     await this.start(action);
     const articleDeleted = await this.articleRepository.getArticleBySlug(slug);
-    this.articleCheck.isDeleted(articleDeleted);
+    this.articleCheck.isDeleted(!!articleDeleted);
   }
 }

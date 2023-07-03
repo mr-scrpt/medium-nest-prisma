@@ -1,31 +1,30 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ArticleEntity } from './entity/article.entity';
 
 @Injectable()
 export class ArticleCheck {
-  isCreated(article: ArticleEntity): boolean {
-    if (!article) {
+  isCreated(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException('Article not created', HttpStatus.BAD_REQUEST);
     }
     return true;
   }
 
-  isUpdated(article: ArticleEntity): boolean {
-    if (!article) {
+  isUpdated(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException('Article not updated', HttpStatus.BAD_REQUEST);
     }
     return true;
   }
 
-  isDeleted(article: ArticleEntity | undefined): boolean {
-    if (article) {
+  isDeleted(bool: boolean | undefined): boolean {
+    if (!bool) {
       throw new HttpException('Article not deleted', HttpStatus.BAD_REQUEST);
     }
     return true;
   }
 
-  isNotExist(article: ArticleEntity | undefined): boolean {
-    if (article) {
+  isNotExist(bool: boolean | undefined): boolean {
+    if (bool) {
       throw new HttpException(
         'Article with this slug already exist',
         HttpStatus.BAD_REQUEST,
@@ -34,8 +33,8 @@ export class ArticleCheck {
     return true;
   }
 
-  isExist(article: ArticleEntity | undefined): boolean {
-    if (!article) {
+  isExist(bool: boolean | undefined): boolean {
+    if (!bool) {
       throw new HttpException(
         'Article with this slug not found',
         HttpStatus.BAD_REQUEST,

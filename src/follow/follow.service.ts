@@ -8,13 +8,10 @@ export class FollowService {
   constructor(private readonly followRepository: FollowRepository) {}
 
   async isFollowing(currentUserId: number, userId: number): Promise<boolean> {
-    console.log('current user id', currentUserId);
-    console.log('user id', userId);
     const follow = await this.followRepository.getFollowData(
       currentUserId,
       userId,
     );
-    console.log('is follow', follow);
     return !!follow;
   }
 

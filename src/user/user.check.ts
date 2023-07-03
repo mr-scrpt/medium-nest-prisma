@@ -3,22 +3,15 @@ import { UserEntity } from './entity/user.entity';
 
 @Injectable()
 export class UserCheck {
-  isExistId(id: number): boolean {
-    if (!id) {
-      throw new HttpException('User id is not exist', HttpStatus.BAD_REQUEST);
-    }
-    return true;
-  }
-
-  isExistUser(user: UserEntity): boolean {
-    if (!user) {
+  isExistUser(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return true;
   }
 
-  isUniqueUser(user: UserEntity): boolean {
-    if (user) {
+  isUniqueUser(bool: boolean): boolean {
+    if (bool) {
       throw new HttpException(
         'Email or username are taken',
         HttpStatus.UNPROCESSABLE_ENTITY,
@@ -47,8 +40,8 @@ export class UserCheck {
     return true;
   }
 
-  isTokenExist(token: string): boolean {
-    if (!token) {
+  isTokenExist(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
     }
     return true;

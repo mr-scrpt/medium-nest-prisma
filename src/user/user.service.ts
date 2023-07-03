@@ -79,7 +79,7 @@ export class UserService {
   async checkUserByName(username: string): Promise<boolean> {
     const user = await this.userRepository.getUserByName(username);
 
-    this.userCheck.isExistUser(user);
+    this.userCheck.isExistUser(!!user);
 
     return true;
   }
@@ -89,6 +89,7 @@ export class UserService {
   }
 
   getUserIdFromToken(tokenString: string): number {
+    // Не выкидываем искючение, потому что есть случаи когда токен не нужен
     try {
       const { id } = this.authService.decodeToken(tokenString) as TokenDecode;
       return +id;
@@ -130,12 +131,12 @@ export class UserService {
 
   private async checkEmailExist(email: string): Promise<void> {
     const user = await this.userRepository.getUserByEmail(email);
-    this.userCheck.isExistUser(user);
+    this.userCheck.isExistUser(!!user);
   }
 
   private async checkUserById(id: number): Promise<void> {
     const user = await this.userRepository.getUserById(id);
-    this.userCheck.isExistUser(user);
+    this.userCheck.isExistUser(!!user);
   }
 
   private getUserById(id: number): Promise<UserEntity> {
@@ -196,7 +197,7 @@ export class UserService {
       username,
     );
 
-    this.userCheck.isUniqueUser(userExists);
+    this.userCheck.isUniqueUser(!!userExists);
   }
 
   private validateUpdateUserDto(updateUserDto: UserUpdateDto): void {
