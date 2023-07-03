@@ -1,26 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
-import { CommentUpdateDto } from '@app/comment/dto/commentUpdate.dto';
+import { CommentRepository } from './comment.repository';
+import { CommentToDBDto } from './dto/db/commentToDB.dto';
+import { ResCommentDto } from './dto/resComment.dto';
+import { CommentFullDataSerializedDto } from './dto/commentFullDataSerialized.dto';
 
 @Injectable()
 export class CommentService {
-  createCommnet(commentCreateDto: CommentCreateDto) {
-    return 'This action adds a new comment';
+  constructor(private commentRepository: CommentRepository) {}
+  async createComment(
+    commentCreateDto: CommentCreateDto,
+    authorId: number,
+    articleId: number,
+  ): Promise<ResCommentDto> {
+    const commentToDB = this.prepareToCreateComment(
+      commentCreateDto,
+      authorId,
+      articleId,
+    );
+
+    const comment = await this.commentRepository.createComment(commentToDB);
+    console.log('after create comment');
+    console.log('comment', comment);
+    if (!comment) {
+      throw new Error('Comment not created');
+    }
+    console.log('id', comment.id);
+    const data = await this.commentRepository.getCommentById(comment.id);
+
+    return this.buildCommentResponse(data);
   }
 
-  findAll() {
-    return `This action returns all comment`;
+  private prepareToCreateComment(
+    commentCreateDto: CommentCreateDto,
+    authorId: number,
+    articleId: number,
+  ): CommentToDBDto {
+    return {
+      ...commentCreateDto,
+      authorId,
+      articleId,
+    };
   }
-
-  findOne(id: number) {
-    return `This action returns a #${id} comment`;
-  }
-
-  updateComment(id: number, commentUpdateDto: CommentUpdateDto) {
-    return `This action updates a #${id} comment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} comment`;
+  private buildCommentResponse(
+    data: CommentFullDataSerializedDto,
+  ): ResCommentDto {
+    return {
+      comment: {
+        ...data,
+      },
+    };
   }
 }

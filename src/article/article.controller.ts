@@ -24,6 +24,8 @@ import { Token } from '@app/auth/iterface/auth.interface';
 import { parseQueryParams } from './article.helper';
 import { ReqArticleUpdateDto } from './dto/reqArticleUpdate.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
+import { ResCommentDto } from '@app/comment/dto/resComment.dto';
+import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
 
 @ApiTags('articles')
 @Controller('articles')
@@ -63,7 +65,7 @@ export class ArticleController {
   @ApiCreatedResponse({ type: ResArticleDto })
   @UsePipes(new ValidationPipe())
   async getArticleBySlug(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
   ): Promise<ResArticleDto> {
     return await this.articleService.getArticleBySlugAndToken(slug, auth);
@@ -87,7 +89,7 @@ export class ArticleController {
   @ApiCreatedResponse({ type: ReqArticleUpdateDto })
   @UsePipes(new ValidationPipe())
   async updateArticleBySlug(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
     @Body('article') articleUpdatedDto: ArticleUpdateDto,
   ): Promise<ResArticleDto> {
@@ -102,7 +104,7 @@ export class ArticleController {
   @Delete(':slug')
   @UsePipes(new ValidationPipe())
   async deleteArticleBySlug(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
   ): Promise<void> {
     console.log('deleteArticleBySlug');
@@ -114,7 +116,7 @@ export class ArticleController {
   @ApiCreatedResponse({ type: ResArticleDto })
   @UsePipes(new ValidationPipe())
   async addFavoriteBySlug(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
   ): Promise<ResArticleDto> {
     return await this.articleService.addToFavorite(slug, auth);
@@ -125,9 +127,25 @@ export class ArticleController {
   @ApiCreatedResponse({ type: ResArticleDto })
   @UsePipes(new ValidationPipe())
   async deleteFavoriteBySlug(
-    @Headers('Authorization') auth: string | undefined,
+    @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
   ): Promise<ResArticleDto> {
     return await this.articleService.deleteFromFavorite(slug, auth);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post(':slug/comments')
+  @ApiCreatedResponse({ type: ResCommentDto })
+  @UsePipes(new ValidationPipe())
+  async addCommentBySlug(
+    @Headers('Authorization') auth: Token,
+    @Param('slug') slug: string,
+    @Body('comment') commentCreateDto: CommentCreateDto,
+  ): Promise<ResCommentDto> {
+    return await this.articleService.createCommentBySlugAndToken(
+      slug,
+      commentCreateDto,
+      auth,
+    );
   }
 }

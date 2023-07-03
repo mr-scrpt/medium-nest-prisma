@@ -9,6 +9,7 @@ import { ArticleToTagModule } from '@app/articleToTag/articleToTag.module';
 import { ArticleTransaction } from './article.transaction';
 import { ArticleCheck } from './article.check';
 import { TagModule } from '@app/tag/tag.module';
+import { CommentModule } from '@app/comment/comment.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TagModule } from '@app/tag/tag.module';
     CommonModule,
     ArticleToTagModule,
     TagModule,
+    CommentModule,
   ],
   controllers: [ArticleController],
   providers: [

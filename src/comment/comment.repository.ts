@@ -1,24 +1,35 @@
-import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
 import { Tx } from '@app/common/common.type';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { CommentEntity } from '@app/comment/entity/comment.entity';
-import { CommentWithRelationEntity } from './entity/commentWithRelation.entity';
+import { CommentWithRelationEntity } from '@app/comment/entity/commentWithRelation.entity';
+import { CommentToDBDto } from '@app/comment/dto/db/commentToDB.dto';
+import { Injectable } from '@nestjs/common';
+import { include } from './comment.select';
 
+@Injectable()
 export class CommentRepository {
-  constructor(private prisma: PrismaService) {}
-  createComment(
-    articleCreateDto: CommentCreateDto,
-    articleId: number,
-    authorId: number,
+  constructor(private readonly prisma: PrismaService) {}
+  async createComment(
+    data: CommentToDBDto,
     prisma: Tx = this.prisma,
   ): Promise<CommentEntity> {
-    return prisma.comment.create({
-      data: {
-        ...articleCreateDto,
-        articleId,
-        authorId,
-      },
+    return await prisma.comment.create({ data, include });
+  }
+
+  async getCommentById(
+    id: number,
+    prisma: Tx = this.prisma,
+  ): Promise<CommentWithRelationEntity> {
+    const where = {
+      id,
+    };
+
+    const comment = await prisma.comment.findUnique({
+      where,
+      include,
     });
+
+    return comment;
   }
 
   async getCommentsByArticleId(

@@ -18,6 +18,9 @@ import { ArticleCreateDto } from '@app/article/dto/articleCreate.dto';
 import { ArticleToDBDto } from '@app/article/dto/db/articleToDB.dto';
 import { ArticlePrepareCreateDto } from '@app/article/dto/articlePrepate.dto';
 import { ArticleFullDataSerializedDto } from '@app/article/dto/articleFullDataSerialized.dto';
+import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
+import { ResCommentDto } from '@app/comment/dto/resComment.dto';
+import { CommentService } from '@app/comment/comment.service';
 
 @Injectable()
 export class ArticleService {
@@ -28,6 +31,7 @@ export class ArticleService {
     private readonly tagService: TagService,
     private readonly articleTransaction: ArticleTransaction,
     private readonly articleCheck: ArticleCheck,
+    private readonly commentService: CommentService,
   ) {}
 
   async getArticleAllByParamsAndToken(
@@ -208,6 +212,23 @@ export class ArticleService {
 
   async getArticleBySlug(slug: string): Promise<ArticleWithRelationEntity> {
     return await this.articleRepository.getArticleBySlug(slug);
+  }
+
+  async createCommentBySlugAndToken(
+    slug: string,
+    commentCreateDto: CommentCreateDto,
+    token: Token,
+  ): Promise<ResCommentDto> {
+    await this.checkExistArticleBySlug(slug);
+
+    const currentUserId = this.userService.getUserIdFromToken(token);
+    const article = await this.getArticleBySlug(slug);
+
+    return await this.commentService.createComment(
+      commentCreateDto,
+      currentUserId,
+      article.id,
+    );
   }
 
   private async compareAndGetSlugNew(
