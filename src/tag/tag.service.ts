@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TagEntity } from '@app/tag/entity/tag.entity';
 import { TagRepository } from '@app/tag/tag.repository';
-import { TagBuildResponseDto } from '@app/tag/dto/tagBuildResponse.dto';
 import { ArticleToTag } from '@prisma/client';
 import { ResTagListDto } from '@app/tag/dto/resTagList.dto';
 
@@ -9,7 +8,7 @@ import { ResTagListDto } from '@app/tag/dto/resTagList.dto';
 export class TagService {
   constructor(private readonly tagRepository: TagRepository) {}
 
-  async findAll(): Promise<TagBuildResponseDto> {
+  async findAll(): Promise<ResTagListDto> {
     const tags = await this.tagRepository.findAll();
     return this.buildTagListResponse(tags);
   }
@@ -41,15 +40,18 @@ export class TagService {
     if (!tagList) {
       return [];
     }
-    return tagList.map((tag) => tag.trim().toLowerCase());
+    return tagList.map((tag) => this.tagNormolized(tag));
   }
 
   private prepareTagList(tagList: TagEntity[]): TagEntity[] {
     return tagList.map((tag) => {
       if (tag && tag.name) {
-        return { ...tag, name: tag.name.trim().toLowerCase() };
+        return { ...tag, name: this.tagNormolized(tag.name) };
       }
     });
+  }
+  private tagNormolized(tag: string): string {
+    return tag.trim().toLowerCase();
   }
 
   private buildTagListResponse(tags: TagEntity[]): ResTagListDto {

@@ -24,6 +24,7 @@ model User {
   favorites  UserToArticle[]
   followedBy UserToUser[]    @relation("UserToUserFollowed")
   following  UserToUser[]    @relation("UserToUserFollowing")
+  Comment    Comment[]
 }
 
 model Article {
@@ -39,6 +40,18 @@ model Article {
   favoritedBy    UserToArticle[]
   author         User            @relation(fields: [authorId], references: [id])
   authorId       Int
+  Comment        Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  body      String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  article   Article  @relation(fields: [articleId], references: [id])
+  articleId Int
 }
 
 model UserToUser {
