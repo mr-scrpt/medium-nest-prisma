@@ -1,21 +1,33 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class FollowCheck {
-  isFollow(bool: boolean) {
+  isFollow(bool: boolean): boolean {
     if (!bool) {
       throw new HttpException(
         'You are not following this user',
-        HttpStatus.UNPROCESSABLE_ENTITY,
+        HttpStatus.BAD_REQUEST,
       );
     }
+    return true;
   }
 
-  isNotFollow(bool: boolean) {
+  isNotFollow(bool: boolean): boolean {
     if (bool) {
       throw new HttpException(
         'You are already following this user',
-        HttpStatus.UNPROCESSABLE_ENTITY,
+        HttpStatus.BAD_REQUEST,
       );
     }
+    return true;
+  }
+
+  isNotYourself(bool: boolean): boolean {
+    if (!bool) {
+      throw new HttpException(
+        'You can not follow yourself',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return true;
   }
 }

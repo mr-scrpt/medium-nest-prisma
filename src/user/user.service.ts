@@ -96,14 +96,11 @@ export class UserService {
     } catch (error) {
       return null;
     }
-    // const { id } = this.authService.decodeToken(tokenString) as TokenDecode;
-    // this.userCheck.isExistId(+id);
-    // return +id;
   }
 
   async getUserByToken(tokenString: Token): Promise<UserEntity> {
     const id = this.getUserIdFromToken(tokenString);
-    this.checkUserById(id);
+    await this.checkUserById(id);
 
     return await this.getUserById(id);
   }
@@ -168,7 +165,10 @@ export class UserService {
     passwordLeft: string,
     passwordRight: string,
   ): boolean {
-    return this.userCheck.isExistPassword(passwordLeft, passwordRight);
+    const bool =
+      (passwordLeft && !passwordRight) || (!passwordLeft && passwordRight);
+
+    return this.userCheck.isNotExistBothPassword(!!bool);
   }
 
   private async checkValidatePassword(

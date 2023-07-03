@@ -1,11 +1,14 @@
-import { ProfileService } from '@app/profile/profile.service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { FollowEntity } from './entity/follow.entity';
-import { FollowRepository } from './follow.repository';
+import { FollowEntity } from '@app/follow/entity/follow.entity';
+import { FollowCheck } from '@app/follow/follow.check';
+import { FollowRepository } from '@app/follow/follow.repository';
 
 @Injectable()
 export class FollowService {
-  constructor(private readonly followRepository: FollowRepository) {}
+  constructor(
+    private readonly followRepository: FollowRepository,
+    private readonly followCheck: FollowCheck,
+  ) {}
 
   async isFollowing(currentUserId: number, userId: number): Promise<boolean> {
     const follow = await this.followRepository.getFollowData(
@@ -17,9 +20,7 @@ export class FollowService {
 
   async checkIsFollowing(currentUserId: number, userId: number): Promise<void> {
     const follow = await this.isFollowing(currentUserId, userId);
-    if (follow) {
-      throw new HttpException('User already followed', HttpStatus.BAD_REQUEST);
-    }
+    this.followCheck.isNotFollow(follow);
   }
 
   async checkIsNotFollowing(
@@ -27,12 +28,7 @@ export class FollowService {
     userId: number,
   ): Promise<void> {
     const follow = await this.isFollowing(currentUserId, userId);
-    if (!follow) {
-      throw new HttpException(
-        'User already unfollowed',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    this.followCheck.isFollow(follow);
   }
 
   async followUser(
@@ -55,12 +51,8 @@ export class FollowService {
     currentUserId: number,
     userId: number,
   ): Promise<void> {
-    if (currentUserId === userId) {
-      throw new HttpException(
-        'You cannot follow yourself',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const isNotYourself = currentUserId === userId;
+    this.followCheck.isNotYourself(!!isNotYourself);
   }
 
   private async checkIsCurrentUserFollow(

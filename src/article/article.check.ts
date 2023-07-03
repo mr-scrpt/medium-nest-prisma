@@ -43,30 +43,33 @@ export class ArticleCheck {
     return true;
   }
 
-  isInFavorites(isFavorite: boolean): void {
-    if (isFavorite) {
+  isInFavorites(bool: boolean): boolean {
+    if (bool) {
       throw new HttpException(
         'This article is already in favorites',
         HttpStatus.BAD_REQUEST,
       );
     }
+    return true;
   }
 
-  isNotInFavorites(isFavorite: boolean): void {
-    if (!isFavorite) {
+  isNotInFavorites(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException(
         'This article is not in favorites',
         HttpStatus.BAD_REQUEST,
       );
     }
+    return true;
   }
 
-  isAuthor(articleId: number, currentUserId: number): void {
-    if (articleId !== currentUserId) {
+  isAuthor(bool: boolean): boolean {
+    if (!bool) {
       throw new HttpException(
         'You are not the author of this article',
         HttpStatus.FORBIDDEN,
       );
     }
+    return true;
   }
 }

@@ -123,7 +123,7 @@ export class ArticleService {
     const currentUserId = this.userService.getUserIdFromToken(token);
     const article = await this.getArticleBySlug(slug);
 
-    this.articleCheck.isAuthor(article.author.id, currentUserId);
+    this.checkIsAutour(article.author.id, currentUserId);
 
     await this.articleTransaction.deleteArticleTransaction(article.slug);
   }
@@ -138,9 +138,9 @@ export class ArticleService {
     const articleClean = this.cleanUpdateArticleDto(articleUpdateDto);
     const currentUserId = this.userService.getUserIdFromToken(token);
 
-    const article = await this.getArticleBySlug(slug);
+    const { author } = await this.getArticleBySlug(slug);
 
-    this.articleCheck.isAuthor(article.author.id, currentUserId);
+    this.checkIsAutour(author.id, currentUserId);
 
     const slugNew = await this.compareAndGetSlugNew(articleClean, slug);
 
@@ -275,6 +275,11 @@ export class ArticleService {
   private async checkUniqueArticleBySlug(slug: string): Promise<void> {
     const article = await this.articleRepository.getArticleBySlug(slug);
     this.articleCheck.isNotExist(!!article);
+  }
+
+  private checkIsAutour(authorId: number, currentUserId: number): void {
+    const isAuthor = authorId === currentUserId;
+    this.articleCheck.isAuthor(isAuthor);
   }
 
   private async getArticlesFeedWithCompletedData(

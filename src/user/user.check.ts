@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { UserEntity } from './entity/user.entity';
 
 @Injectable()
 export class UserCheck {
@@ -22,16 +21,13 @@ export class UserCheck {
 
   isValidPassword(bool: boolean): boolean {
     if (!bool) {
-      throw new HttpException(
-        'Password is invalid',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw new HttpException('Password is invalid', HttpStatus.BAD_REQUEST);
     }
     return true;
   }
 
-  isExistPassword(passwordLeft: string, passwordRight: string): boolean {
-    if ((passwordLeft && !passwordRight) || (!passwordLeft && passwordRight)) {
+  isNotExistBothPassword(bool: boolean): boolean {
+    if (bool) {
       throw new HttpException(
         'New password and old password are required',
         HttpStatus.BAD_REQUEST,
