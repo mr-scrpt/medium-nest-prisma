@@ -7,18 +7,21 @@ import { TagEntity } from './entity/tag.entity';
 export class TagRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(driver: Tx = this.prisma): Promise<TagEntity[]> {
-    return await driver.tag.findMany();
+  async findAll(prisma: Tx = this.prisma): Promise<TagEntity[]> {
+    return await prisma.tag.findMany();
   }
 
-  async getTagByName(name: string): Promise<TagEntity> {
-    return await this.prisma.tag.findUnique({
+  async getTagByName(
+    name: string,
+    prisma: Tx = this.prisma,
+  ): Promise<TagEntity> {
+    return await prisma.tag.findUnique({
       where: { name },
     });
   }
 
-  async getUnusedTagList(driver: Tx = this.prisma): Promise<TagEntity[]> {
-    return await driver.tag.findMany({
+  async getUnusedTagList(prisma: Tx = this.prisma): Promise<TagEntity[]> {
+    return await prisma.tag.findMany({
       where: {
         articles: {
           none: {}, // Ни одна статья не связана с тегом
@@ -27,35 +30,17 @@ export class TagRepository {
     });
   }
 
-  async createTag(name: string): Promise<TagEntity> {
-    return await this.prisma.tag.create({
+  async createTag(name: string, prisma: Tx = this.prisma): Promise<TagEntity> {
+    return await prisma.tag.create({
       data: { name },
     });
   }
 
-  // async createTagByList(
-  //   names: string[],
-  //   driver: Tx = this.prisma,
-  // ): Promise<TagEntity[]> {
-  //   const createdTags: TagEntity[] = [];
-
-  //   for (const name of names) {
-  //     const createdTag = await driver.tag.create({
-  //       data: {
-  //         name: name,
-  //       },
-  //     });
-  //     createdTags.push(createdTag);
-  //   }
-
-  //   return createdTags;
-  // }
-  //
   async createTagByList(
     tagListName: string[],
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<void> {
-    await driver.tag.createMany({
+    await prisma.tag.createMany({
       data: tagListName.map((name) => ({
         name,
       })),
@@ -65,9 +50,9 @@ export class TagRepository {
 
   async getTagListByNameList(
     tagListName: string[],
-    driver: Tx = this.prisma,
+    prisma: Tx = this.prisma,
   ): Promise<TagEntity[]> {
-    return await driver.tag.findMany({
+    return await prisma.tag.findMany({
       where: {
         name: {
           in: tagListName,
@@ -76,8 +61,12 @@ export class TagRepository {
     });
   }
 
-  async createArticleToTag(articleId: number, tagId: number): Promise<void> {
-    await this.prisma.articleToTag.create({
+  async createArticleToTag(
+    articleId: number,
+    tagId: number,
+    prisma: Tx = this.prisma,
+  ): Promise<void> {
+    await prisma.articleToTag.create({
       data: {
         articleId,
         tagId,
@@ -85,8 +74,11 @@ export class TagRepository {
     });
   }
 
-  async getTagListByIds(tagIds: number[]): Promise<TagEntity[]> {
-    return await this.prisma.tag.findMany({
+  async getTagListByIds(
+    tagIds: number[],
+    prisma: Tx = this.prisma,
+  ): Promise<TagEntity[]> {
+    return await prisma.tag.findMany({
       where: {
         id: {
           in: tagIds,
@@ -95,9 +87,9 @@ export class TagRepository {
     });
   }
 
-  async deleteUnuseTags(driver: Tx = this.prisma): Promise<void> {
-    const unusedTags = await this.getUnusedTagList(driver);
-    await driver.tag.deleteMany({
+  async deleteUnuseTags(prisma: Tx = this.prisma): Promise<void> {
+    const unusedTags = await this.getUnusedTagList(prisma);
+    await prisma.tag.deleteMany({
       where: {
         id: {
           in: unusedTags.map((tag) => tag.id),
