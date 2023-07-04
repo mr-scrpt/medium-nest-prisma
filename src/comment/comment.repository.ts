@@ -39,9 +39,6 @@ export class CommentRepository {
     const where = {
       articleId: articleId,
     };
-    const include = {
-      author: true,
-    };
 
     const comment = await prisma.comment.findMany({
       where,
@@ -49,5 +46,16 @@ export class CommentRepository {
     });
 
     return comment;
+  }
+
+  async deleteCommentById(id: number, prisma: Tx = this.prisma): Promise<void> {
+    const where = {
+      id,
+    };
+
+    await prisma.comment.delete({
+      where,
+      include,
+    });
   }
 }

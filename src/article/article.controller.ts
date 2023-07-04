@@ -26,6 +26,7 @@ import { ReqArticleUpdateDto } from './dto/reqArticleUpdate.dto';
 import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ResCommentDto } from '@app/comment/dto/resComment.dto';
 import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
+import { ResCommentListDto } from '@app/comment/dto/resCommentList.dto';
 
 @ApiTags('articles')
 @Controller('articles')
@@ -147,5 +148,26 @@ export class ArticleController {
       commentCreateDto,
       auth,
     );
+  }
+
+  @Get(':slug/comments')
+  @ApiCreatedResponse({ type: ResCommentDto })
+  @UsePipes(new ValidationPipe())
+  async getCommentListBySlug(
+    @Param('slug') slug: string,
+  ): Promise<ResCommentListDto> {
+    return await this.articleService.getCommentListBySlug(slug);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':slug/comments/:id')
+  @ApiCreatedResponse({ type: ResCommentDto })
+  @UsePipes(new ValidationPipe())
+  async deleteCommentBySlug(
+    @Headers('Authorization') auth: Token,
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.articleService.deleteCommentById(slug, id, auth);
   }
 }

@@ -21,6 +21,7 @@ import { ArticleFullDataSerializedDto } from '@app/article/dto/articleFullDataSe
 import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
 import { ResCommentDto } from '@app/comment/dto/resComment.dto';
 import { CommentService } from '@app/comment/comment.service';
+import { ResCommentListDto } from '@app/comment/dto/resCommentList.dto';
 
 @Injectable()
 export class ArticleService {
@@ -229,6 +230,26 @@ export class ArticleService {
       currentUserId,
       article.id,
     );
+  }
+
+  async getCommentListBySlug(slug: string): Promise<ResCommentListDto> {
+    await this.checkExistArticleBySlug(slug);
+
+    const article = await this.getArticleBySlug(slug);
+
+    return await this.commentService.getCommentListByArticleId(article.id);
+  }
+
+  async deleteCommentById(
+    slug: string,
+    commentId: string,
+    token: Token,
+  ): Promise<void> {
+    await this.checkExistArticleBySlug(slug);
+
+    const userId = this.userService.getUserIdFromToken(token);
+
+    await this.commentService.deleteCommentById(+commentId, userId);
   }
 
   private async compareAndGetSlugNew(

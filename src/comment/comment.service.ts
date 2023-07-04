@@ -4,10 +4,16 @@ import { CommentRepository } from './comment.repository';
 import { CommentToDBDto } from './dto/db/commentToDB.dto';
 import { ResCommentDto } from './dto/resComment.dto';
 import { CommentFullDataSerializedDto } from './dto/commentFullDataSerialized.dto';
+import { ResCommentListDto } from './dto/resCommentList.dto';
+import { CommentCheck } from './comment.check';
 
 @Injectable()
 export class CommentService {
-  constructor(private commentRepository: CommentRepository) {}
+  constructor(
+    private commentRepository: CommentRepository,
+    private readonly commentCheck: CommentCheck,
+  ) {}
+
   async createComment(
     commentCreateDto: CommentCreateDto,
     authorId: number,
@@ -20,15 +26,37 @@ export class CommentService {
     );
 
     const comment = await this.commentRepository.createComment(commentToDB);
-    console.log('after create comment');
-    console.log('comment', comment);
-    if (!comment) {
-      throw new Error('Comment not created');
-    }
-    console.log('id', comment.id);
     const data = await this.commentRepository.getCommentById(comment.id);
 
     return this.buildCommentResponse(data);
+  }
+
+  async getCommentListByArticleId(
+    articleId: number,
+  ): Promise<ResCommentListDto> {
+    const comments = await this.commentRepository.getCommentsByArticleId(
+      articleId,
+    );
+
+    return this.buildCommentListResponse(comments);
+  }
+
+  async deleteCommentById(commentId: number, userId: number): Promise<void> {
+    await this.checkExistComment(commentId);
+    const comment = await this.commentRepository.getCommentById(commentId);
+    await this.checkIsAuthor(comment.authorId, userId);
+
+    await this.commentRepository.deleteCommentById(commentId);
+  }
+
+  private async checkIsAuthor(authorId: number, userId: number): Promise<void> {
+    const isAuthor = authorId === userId;
+    this.commentCheck.isAuthor(!!isAuthor);
+  }
+
+  private async checkExistComment(commentId: number): Promise<void> {
+    const comment = await this.commentRepository.getCommentById(commentId);
+    this.commentCheck.isExist(!!comment);
   }
 
   private prepareToCreateComment(
@@ -42,6 +70,7 @@ export class CommentService {
       articleId,
     };
   }
+
   private buildCommentResponse(
     data: CommentFullDataSerializedDto,
   ): ResCommentDto {
@@ -49,6 +78,14 @@ export class CommentService {
       comment: {
         ...data,
       },
+    };
+  }
+
+  private buildCommentListResponse(
+    comments: CommentFullDataSerializedDto[],
+  ): ResCommentListDto {
+    return {
+      comments,
     };
   }
 }
