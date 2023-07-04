@@ -1,4 +1,5 @@
 import { ArticleToTagRepository } from '@app/articleToTag/articleToTag.repository';
+import { CommentRepository } from '@app/comment/comment.repository';
 import { Transaction } from '@app/common/common.transaction';
 import { Tx } from '@app/common/common.type';
 import { PrismaService } from '@app/prisma/prisma.service';
@@ -17,6 +18,7 @@ export class ArticleTransaction extends Transaction {
     private readonly tagRepository: TagRepository,
     private readonly articleToTagRepository: ArticleToTagRepository,
     private readonly articleCheck: ArticleCheck,
+    private readonly commentRepository: CommentRepository,
   ) {
     super(prisma);
   }
@@ -105,6 +107,8 @@ export class ArticleTransaction extends Transaction {
         existingTagIds,
         tx,
       );
+
+      await this.commentRepository.deleteCommentListByArticleId(article.id, tx);
 
       await this.articleRepository.deleteArticleBySlug(slug, tx);
 

@@ -16,8 +16,8 @@ export class ArticleCheck {
     return true;
   }
 
-  isDeleted(bool: boolean | undefined): boolean {
-    if (!bool) {
+  isDeleted(bool: boolean): boolean {
+    if (bool) {
       throw new HttpException('Article not deleted', HttpStatus.BAD_REQUEST);
     }
     return true;

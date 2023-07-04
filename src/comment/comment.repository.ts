@@ -58,4 +58,17 @@ export class CommentRepository {
       include,
     });
   }
+
+  async deleteCommentListByArticleId(
+    articleId: number,
+    prisma: Tx = this.prisma,
+  ): Promise<void> {
+    const where = {
+      articleId,
+    };
+
+    await prisma.comment.deleteMany({
+      where,
+    });
+  }
 }
