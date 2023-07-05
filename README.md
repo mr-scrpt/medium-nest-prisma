@@ -3,7 +3,7 @@
      <img src="https://github.com/mr-scrpt/medium-nest-prisma/project-logo.png" alt="Project Logo" />
   </a>
 </p>
-
+# ![Node/Express/Mongoose Example App](project-logo.png)
 ## Description
 
 Backend on NestJs using Prisma for [RealWorld](https://github.com/gothinkster/realworld) projects
