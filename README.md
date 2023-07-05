@@ -1,5 +1,7 @@
 <p align="center">
-  <a href="https://github.com/mr-scrpt/medium-nest-prisma" target="blank"><img src="https://nestjs.com/img/logo-small.svg" alt="Project Logo" /></a>
+  <a href="https://github.com/mr-scrpt/medium-nest-prisma" target="blank">
+     <img src="https://github.com/mr-scrpt/medium-nest-prisma/project-logo.png" alt="Project Logo" />
+  </a>
 </p>
 
 ## Description
