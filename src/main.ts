@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { HttpExceptionFilter } from './common/common.exception';
+// import { HttpExceptionFilter } from './common/common.filter';
 
 if (process.env.NODE_ENV || process.env.NODE_ENV === 'prod') {
   require('module-alias/register');

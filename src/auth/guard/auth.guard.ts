@@ -2,12 +2,12 @@ import {
   CanActivate,
   Inject,
   HttpStatus,
-  HttpException,
   ExecutionContext,
   Injectable,
 } from '@nestjs/common';
 import { UserService } from '@app/user/user.service';
 import { UserCheck } from '@app/user/user.check';
+import { HttpExceptionCustom } from '@app/common/common.exception';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -26,7 +26,7 @@ export class AuthGuard implements CanActivate {
       await this.userService.getUserByToken(tokenString);
       return true;
     } catch (error) {
-      throw new HttpException(
+      throw new HttpExceptionCustom(
         'Token expired or incorrect',
         HttpStatus.UNAUTHORIZED,
       );

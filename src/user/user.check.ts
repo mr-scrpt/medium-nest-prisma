@@ -1,17 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpExceptionCustom } from '@app/common/common.exception';
+import { HttpStatus, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserCheck {
   isExistUser(bool: boolean): boolean {
     if (!bool) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new HttpExceptionCustom('User not found', HttpStatus.NOT_FOUND);
     }
     return true;
   }
 
   isUniqueUser(bool: boolean): boolean {
     if (bool) {
-      throw new HttpException(
+      throw new HttpExceptionCustom(
         'Email or username are taken',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
@@ -21,14 +22,17 @@ export class UserCheck {
 
   isValidPassword(bool: boolean): boolean {
     if (!bool) {
-      throw new HttpException('Password is invalid', HttpStatus.BAD_REQUEST);
+      throw new HttpExceptionCustom(
+        'Password is invalid',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return true;
   }
 
   isNotExistBothPassword(bool: boolean): boolean {
     if (bool) {
-      throw new HttpException(
+      throw new HttpExceptionCustom(
         'New password and old password are required',
         HttpStatus.BAD_REQUEST,
       );
@@ -38,14 +42,14 @@ export class UserCheck {
 
   isTokenExist(bool: boolean): boolean {
     if (!bool) {
-      throw new HttpException('Not authorized', HttpStatus.UNAUTHORIZED);
+      throw new HttpExceptionCustom('Not authorized', HttpStatus.UNAUTHORIZED);
     }
     return true;
   }
 
   isNotEmptyUpdate(bool: boolean): boolean {
     if (!bool) {
-      throw new HttpException(
+      throw new HttpExceptionCustom(
         'At least one field must be filled',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );

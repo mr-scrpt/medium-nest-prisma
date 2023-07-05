@@ -9,11 +9,19 @@ import { validate, ValidationError } from 'class-validator';
 
 export class CustomValidationPipe implements PipeTransform {
   async transform(value: any, metadata: ArgumentMetadata) {
-    if (value === null || value === undefined) {
-      return value; // Пропускаем null и undefined значения без валидации
-    }
+    // console.log('in pipe', value, metadata);
+    // if (value === null || value === undefined) {
+    //   return value; // Пропускаем null и undefined значения без валидации
+    // }
     if (typeof value === 'string') {
       return value.trim(); // Удаляем пробелы по краям строки
+    }
+
+    if (this.isEmpty(value)) {
+      throw new HttpException(
+        'Validation failed: No body submitted',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const object = plainToClass(metadata.metatype, value);
@@ -23,6 +31,7 @@ export class CustomValidationPipe implements PipeTransform {
     const errors = await validate(object);
 
     if (errors.length === 0) {
+      console.log('in pipe no errors');
       return value;
     }
 
@@ -46,5 +55,12 @@ export class CustomValidationPipe implements PipeTransform {
     });
 
     return result;
+  }
+
+  isEmpty(value: any) {
+    if (Object.keys(value).length > 0) {
+      return false;
+    }
+    return true;
   }
 }
