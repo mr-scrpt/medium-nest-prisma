@@ -42,6 +42,7 @@ export class CommentService {
   }
 
   async deleteCommentById(commentId: number, userId: number): Promise<void> {
+    console.log('commentId', commentId);
     await this.checkExistComment(commentId);
     const comment = await this.commentRepository.getCommentById(commentId);
     await this.checkIsAuthor(comment.authorId, userId);

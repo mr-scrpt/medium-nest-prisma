@@ -34,9 +34,12 @@ export class UserService {
   }
 
   async createUser(userCreateDto: UserCreateDto): Promise<ResUserDto> {
+    console.log(userCreateDto);
     const userClean = this.prepareUserCreateObject(userCreateDto);
     const { email, username } = userCreateDto;
     await this.checkUniqueUser(email, username);
+
+    console.log(userClean);
 
     const passwordHashed = await this.authService.hashPassword(
       userClean.password,

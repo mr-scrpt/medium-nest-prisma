@@ -52,6 +52,7 @@ export class FollowService {
     userId: number,
   ): Promise<void> {
     const isNotYourself = currentUserId === userId;
+    console.log('isNotYourself', isNotYourself);
     this.followCheck.isNotYourself(!!isNotYourself);
   }
 

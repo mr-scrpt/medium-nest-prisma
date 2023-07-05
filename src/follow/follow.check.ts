@@ -22,7 +22,7 @@ export class FollowCheck {
   }
 
   isNotYourself(bool: boolean): boolean {
-    if (!bool) {
+    if (bool) {
       throw new HttpException(
         'You can not follow yourself',
         HttpStatus.BAD_REQUEST,

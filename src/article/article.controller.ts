@@ -5,7 +5,6 @@ import {
   Body,
   Headers,
   UsePipes,
-  ValidationPipe,
   Get,
   Query,
   Param,
@@ -27,6 +26,7 @@ import { ArticleUpdateDto } from './dto/articleUpdate.dto';
 import { ResCommentDto } from '@app/comment/dto/resComment.dto';
 import { CommentCreateDto } from '@app/comment/dto/commentCreate.dto';
 import { ResCommentListDto } from '@app/comment/dto/resCommentList.dto';
+import { CustomValidationPipe } from '@app/common/common.pipe';
 
 @ApiTags('articles')
 @Controller('articles')
@@ -35,7 +35,7 @@ export class ArticleController {
 
   @Get()
   @ApiCreatedResponse({ type: ResArticeFeedDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getArticleAll(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
@@ -50,7 +50,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Get('feed')
   @ApiCreatedResponse({ type: ResArticeFeedDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getArticleFeed(
     @Headers('Authorization') token: Token,
     @Query() query: IArtilceQueryParamsOptional,
@@ -64,7 +64,7 @@ export class ArticleController {
 
   @Get(':slug')
   @ApiCreatedResponse({ type: ResArticleDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getArticleBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -76,7 +76,7 @@ export class ArticleController {
   @Post()
   @ApiBody({ type: ReqArticleCreateDto })
   @ApiCreatedResponse({ type: ReqArticleCreateDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async createArticle(
     @Headers('Authorization') auth: string | undefined,
     @Body('article') articleCreateDto: ArticleCreateDto,
@@ -88,7 +88,7 @@ export class ArticleController {
   @Put(':slug')
   @ApiBody({ type: ReqArticleUpdateDto })
   @ApiCreatedResponse({ type: ReqArticleUpdateDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async updateArticleBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -103,7 +103,7 @@ export class ArticleController {
 
   @UseGuards(AuthGuard)
   @Delete(':slug')
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async deleteArticleBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -115,7 +115,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Post(':slug/favorite')
   @ApiCreatedResponse({ type: ResArticleDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async addFavoriteBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -126,7 +126,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Delete(':slug/favorite')
   @ApiCreatedResponse({ type: ResArticleDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async deleteFavoriteBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -137,7 +137,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Post(':slug/comments')
   @ApiCreatedResponse({ type: ResCommentDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async addCommentBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
@@ -152,7 +152,7 @@ export class ArticleController {
 
   @Get(':slug/comments')
   @ApiCreatedResponse({ type: ResCommentDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async getCommentListBySlug(
     @Param('slug') slug: string,
   ): Promise<ResCommentListDto> {
@@ -162,7 +162,7 @@ export class ArticleController {
   @UseGuards(AuthGuard)
   @Delete(':slug/comments/:id')
   @ApiCreatedResponse({ type: ResCommentDto })
-  @UsePipes(new ValidationPipe())
+  @UsePipes(new CustomValidationPipe())
   async deleteCommentBySlug(
     @Headers('Authorization') auth: Token,
     @Param('slug') slug: string,
