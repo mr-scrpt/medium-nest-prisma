@@ -10,9 +10,9 @@
 
 ---
 
-## Description
+<!-- ## Description -->
 
-Backend on NestJs using Prisma for [RealWorld](https://github.com/gothinkster/realworld) projects
+<!-- Backend on NestJs using Prisma for [RealWorld](https://github.com/gothinkster/realworld) projects -->
 
 ## About
 
