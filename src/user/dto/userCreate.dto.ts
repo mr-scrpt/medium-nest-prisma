@@ -7,7 +7,7 @@ export class UserCreateDto {
   readonly username: string;
 
   @ApiProperty({
-    example: 'test.new@gmail.com',
+    example: 'test@gmail.com',
     description: 'The email of the User',
   })
   @IsEmail()
