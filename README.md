@@ -1,14 +1,14 @@
-# ![RealWorld Example App](logo.png)
+<!-- <p align="center"> -->
+<!--   <a href="https://github.com/mr-scrpt/medium-nest-prisma" target="blank"> -->
+<!--      <img src="https://github.com/mr-scrpt/medium-nest-prisma/project-logo.png" alt="Project Logo" /> -->
+<!--   </a> -->
+<!-- </p> -->
 
-> ### [YOUR_FRAMEWORK] codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
+# ![Node/Express/Mongoose Example App](project-logo.png)
 
-### [Demo](https://demo.realworld.io/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
+> ### NestJS codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) API spec.
 
-This codebase was created to demonstrate a fully fledged fullstack application built with **[YOUR_FRAMEWORK]** including CRUD operations, authentication, routing, pagination, and more.
-
-We've gone to great lengths to adhere to the **[YOUR_FRAMEWORK]** community styleguides & best practices.
-
-For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
+---
 
 ## Description
 
