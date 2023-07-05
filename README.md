@@ -1,9 +1,15 @@
-<p align="center">
-  <a href="https://github.com/mr-scrpt/medium-nest-prisma" target="blank">
-     <img src="https://github.com/mr-scrpt/medium-nest-prisma/project-logo.png" alt="Project Logo" />
-  </a>
-</p>
+<!-- <p align="center"> -->
+<!--   <a href="https://github.com/mr-scrpt/medium-nest-prisma" target="blank"> -->
+<!--      <img src="https://github.com/mr-scrpt/medium-nest-prisma/project-logo.png" alt="Project Logo" /> -->
+<!--   </a> -->
+<!-- </p> -->
+
 # ![Node/Express/Mongoose Example App](project-logo.png)
+
+> ### NestJS codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld-example-apps) API spec.
+
+---
+
 ## Description
 
 Backend on NestJs using Prisma for [RealWorld](https://github.com/gothinkster/realworld) projects
