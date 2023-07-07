@@ -1,4 +1,4 @@
-import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { AuthService } from '@app/auth/auth.service';
 import { UserCreateDto } from '@app/user/dto/userCreate.dto';
 import { UserEntity } from '@app/user/entity/user.entity';
@@ -11,6 +11,7 @@ import { UserRepository } from '@app/user/user.repository';
 import { Token } from '@app/auth/iterface/auth.interface';
 import { UserCheck } from '@app/user/user.check';
 import { ResUserWithTokenDto } from './dto/resUserWithToken.dto';
+import { HttpExceptionCustom } from '@app/common/common.exception';
 
 @Injectable()
 export class UserService {
@@ -122,7 +123,7 @@ export class UserService {
 
       return user;
     } catch (e) {
-      throw new HttpException(
+      throw new HttpExceptionCustom(
         'login or password incorrect',
         HttpStatus.BAD_REQUEST,
       );

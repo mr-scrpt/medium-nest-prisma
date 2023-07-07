@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FollowEntity } from '@app/follow/entity/follow.entity';
 import { FollowCheck } from '@app/follow/follow.check';
 import { FollowRepository } from '@app/follow/follow.repository';
@@ -52,7 +52,6 @@ export class FollowService {
     userId: number,
   ): Promise<void> {
     const isNotYourself = currentUserId === userId;
-    console.log('isNotYourself', isNotYourself);
     this.followCheck.isNotYourself(!!isNotYourself);
   }
 
